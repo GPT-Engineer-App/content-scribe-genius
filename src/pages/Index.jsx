@@ -237,7 +237,8 @@ const Index = () => {
       const response = await axios.get('https://hook.eu1.make.com/kn986l8l6n8lod1vxti2wfgjoxntmsya?action=get_2weeks');
       const data = response.data;
       if (Array.isArray(data) && data.length > 0 && data[0].result === 'success') {
-        setCalendarData(data.map(item => item.calendar_list));
+        const calendarList = data.map(item => item.calendar_list).flat();
+        setCalendarData(calendarList);
         setIsCalendarDialogOpen(true);
       } else {
         throw new Error('Invalid response format');
@@ -279,12 +280,12 @@ const Index = () => {
               <div key={day} className="text-center font-bold">{day}</div>
             ))}
             {days.map(day => {
-              const post = calendarData.find(item => format(parseISO(item.date), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd'));
-              let className = "text-center p-2 rounded-full";
-              if (post) {
-                if (post.status === 'planned') {
+              const posts = calendarData.flat().filter(item => format(parseISO(item.date), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd'));
+              let className = "text-center p-2 rounded-full cursor-pointer";
+              if (posts.length > 0) {
+                if (posts.some(post => post.status === 'planned')) {
                   className += " bg-orange-500 text-white font-bold";
-                } else if (post.status === 'done') {
+                } else if (posts.every(post => post.status === 'done')) {
                   className += " bg-green-800 text-white font-bold";
                 }
               }
@@ -292,9 +293,10 @@ const Index = () => {
                 <div
                   key={day.toString()}
                   className={className}
-                  onClick={() => post && setSelectedPost(post)}
+                  onClick={() => posts.length > 0 && setSelectedPost(posts[0])}
                 >
                   {format(day, 'd')}
+                  {posts.length > 1 && <span className="ml-1 text-xs">({posts.length})</span>}
                 </div>
               );
             })}
@@ -308,14 +310,15 @@ const Index = () => {
     <Dialog open={!!selectedPost} onOpenChange={() => setSelectedPost(null)}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{selectedPost?.title}</DialogTitle>
+          <DialogTitle>{selectedPost?.title || 'Post Details'}</DialogTitle>
         </DialogHeader>
         <div className="mt-4">
-          <p><strong>Date:</strong> {format(parseISO(selectedPost?.date), 'PPP')}</p>
+          <p><strong>Date:</strong> {selectedPost?.date ? format(parseISO(selectedPost.date), 'PPP') : 'N/A'}</p>
+          <p><strong>Status:</strong> {selectedPost?.status || 'N/A'}</p>
           {selectedPost?.image_url && (
             <img src={selectedPost.image_url} alt="Post" className="mt-2 max-w-full h-auto" />
           )}
-          <p className="mt-2"><strong>Content:</strong> {selectedPost?.content}</p>
+          <p className="mt-2"><strong>Content:</strong> {selectedPost?.content || 'No content available'}</p>
         </div>
         <DialogFooter>
           <Button onClick={() => handleRemovePost(selectedPost)}>Remove</Button>

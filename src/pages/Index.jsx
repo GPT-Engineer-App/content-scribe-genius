@@ -689,8 +689,21 @@ const Index = () => {
 
   return (
     <div className="container mx-auto p-4 pb-40 min-h-screen overflow-y-auto">
-      {/* ... existing content ... */}
-      
+      <h1 className="text-2xl font-bold mb-4 text-center sm:text-left">Content Generation App</h1>
+      <div className="space-y-4">
+        {/* ... existing content ... */}
+      </div>
+
+      {isLoading && (
+        <div className="mt-4 flex items-center">
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          <p>Processing request, please wait...</p>
+        </div>
+      )}
+      {error && <p className="mt-4 text-red-500">Error: {error}</p>}
+
+      {/* ... rest of the existing content ... */}
+
       {/* Sticky Console Log */}
       <div className="fixed bottom-0 left-0 right-0 bg-black bg-opacity-80 text-white p-4 font-mono text-sm z-50">
         <h3 className="text-lg font-semibold mb-2">Console Log:</h3>

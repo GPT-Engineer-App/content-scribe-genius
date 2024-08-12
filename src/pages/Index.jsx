@@ -274,18 +274,6 @@ const Index = () => {
     }
   };
 
-  const handleRemovePost = (post) => {
-    // Implement remove functionality
-    console.log('Removing post:', post);
-    setSelectedPost(null);
-  };
-
-  const handleReschedulePost = (post) => {
-    // Implement reschedule functionality
-    console.log('Rescheduling post:', post);
-    setSelectedPost(null);
-  };
-
   const CalendarDialog = () => {
     const today = new Date();
     const monthStart = startOfMonth(today);
@@ -338,32 +326,6 @@ const Index = () => {
         </DialogContent>
       </Dialog>
     );
-  };
-
-  const handleRemovePost = async (post) => {
-    try {
-      setIsLoading(true);
-      const response = await axios.put('https://hook.eu1.make.com/7hok9kqjre31fea5p7yi9ialusmbvlkc', {
-        action: 'remove_post',
-        post_id: post.id
-      });
-      if (response.data && response.data[0].result === 'success') {
-        setCalendarData(prevData => prevData.filter(item => item.id !== post.id));
-        toast.success('Post removed successfully');
-      } else {
-        throw new Error('Failed to remove post');
-      }
-    } catch (error) {
-      console.error('Error removing post:', error);
-      toast.error('Failed to remove post. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleReschedulePost = (post) => {
-    setSelectedPost(post);
-    setDialogOpen(true);
   };
 
   const PostDialog = () => {

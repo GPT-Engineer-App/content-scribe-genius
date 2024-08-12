@@ -238,20 +238,21 @@ const Index = () => {
     try {
       const response = await axios.get('https://hook.eu1.make.com/kn986l8l6n8lod1vxti2wfgjoxntmsya?action=get_2weeks');
       const data = response.data;
-      if (Array.isArray(data) && data.length > 0 && data[0].result === 'success') {
-        const calendarList = data.flatMap(item => {
-          if (Array.isArray(item.calendar_list)) {
-            return item.calendar_list.map(post => ({
+      if (Array.isArray(data) && data.length > 0) {
+        let calendarList = [];
+        data.forEach(item => {
+          if (item.calendar_list && Array.isArray(item.calendar_list)) {
+            calendarList = calendarList.concat(item.calendar_list.map(post => ({
               ...post,
               date: post.date ? parseISO(post.date) : null,
-              formatted_date: post.formatted_date || format(parseISO(post.date), 'MMM dd, yyyy')
-            }));
+              formatted_date: post.formatted_date || (post.date ? format(parseISO(post.date), 'MMM dd, yyyy') : 'No date')
+            })));
           }
-          return [];
         });
         // Sort the calendar data by date
-        calendarList.sort((a, b) => a.date - b.date);
+        calendarList.sort((a, b) => (a.date && b.date) ? a.date - b.date : 0);
         setCalendarData(calendarList);
+        console.log('Calendar data set:', calendarList); // Add this line for debugging
       } else {
         throw new Error('Invalid response format');
       }
@@ -582,7 +583,7 @@ const Index = () => {
             <div className="mt-4 md:mt-0 bg-white p-4 rounded-md shadow-md flex-grow">
               <h3 className="text-lg font-semibold mb-2">Scheduled Posts</h3>
               {calendarData.length > 0 ? (
-                <ul className="space-y-2">
+                <ul className="space-y-2 max-h-96 overflow-y-auto">
                   {calendarData.map((post, index) => (
                     <li key={index} className="flex items-center justify-between border-b pb-2">
                       <span>{post.formatted_date}: {post.title || 'Untitled'}</span>

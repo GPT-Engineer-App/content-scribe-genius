@@ -240,6 +240,8 @@ const Index = () => {
       const data = response.data;
       if (Array.isArray(data) && data.length > 0 && data[0].result === 'success') {
         const calendarList = data.map(item => item.calendar_list).flat();
+        // Sort the calendar data by date
+        calendarList.sort((a, b) => new Date(a.date) - new Date(b.date));
         setCalendarData(calendarList);
       } else {
         throw new Error('Invalid response format');
@@ -249,6 +251,17 @@ const Index = () => {
       toast.error('Failed to fetch calendar data. Please try again.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const getPostColor = (status) => {
+    switch (status) {
+      case 'planned':
+        return 'bg-yellow-500';
+      case 'done':
+        return 'bg-green-500';
+      default:
+        return 'bg-gray-500';
     }
   };
 
@@ -272,9 +285,9 @@ const Index = () => {
 
     return (
       <Dialog open={isCalendarDialogOpen} onOpenChange={setIsCalendarDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[700px]">
           <DialogHeader>
-            <DialogTitle>Calendar</DialogTitle>
+            <DialogTitle>Content Calendar</DialogTitle>
           </DialogHeader>
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
@@ -286,23 +299,22 @@ const Index = () => {
                 <div key={day} className="text-center font-bold">{day}</div>
               ))}
               {days.map(day => {
-                const posts = calendarData.flat().filter(item => format(parseISO(item.date), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd'));
-                let className = "text-center p-2 rounded-full cursor-pointer";
-                if (posts.length > 0) {
-                  if (posts.some(post => post.status === 'planned')) {
-                    className += " bg-orange-500 text-white font-bold";
-                  } else if (posts.every(post => post.status === 'done')) {
-                    className += " bg-green-800 text-white font-bold";
-                  }
-                }
+                const posts = calendarData.filter(item => format(parseISO(item.date), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd'));
                 return (
                   <div
                     key={day.toString()}
-                    className={className}
-                    onClick={() => posts.length > 0 && setSelectedPost(posts[0])}
+                    className="border p-1 h-24 overflow-y-auto"
                   >
-                    {format(day, 'd')}
-                    {posts.length > 1 && <span className="ml-1 text-xs">({posts.length})</span>}
+                    <div className="text-right text-xs">{format(day, 'd')}</div>
+                    {posts.map((post, index) => (
+                      <div
+                        key={index}
+                        className={`${getPostColor(post.status)} text-white text-xs p-1 mb-1 rounded cursor-pointer`}
+                        onClick={() => setSelectedPost(post)}
+                      >
+                        {post.title || 'Untitled'}
+                      </div>
+                    ))}
                   </div>
                 );
               })}
@@ -318,27 +330,88 @@ const Index = () => {
     );
   };
 
-  const PostDialog = () => (
-    <Dialog open={!!selectedPost} onOpenChange={() => setSelectedPost(null)}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>{selectedPost?.title || 'Post Details'}</DialogTitle>
-        </DialogHeader>
-        <div className="mt-4">
-          <p><strong>Date:</strong> {selectedPost?.date ? format(parseISO(selectedPost.date), 'PPP') : 'N/A'}</p>
-          <p><strong>Status:</strong> {selectedPost?.status || 'N/A'}</p>
-          {selectedPost?.image_url && (
-            <img src={selectedPost.image_url} alt="Post" className="mt-2 max-w-full h-auto" />
-          )}
-          <p className="mt-2"><strong>Content:</strong> {selectedPost?.content || 'No content available'}</p>
-        </div>
-        <DialogFooter>
-          <Button onClick={() => handleRemovePost(selectedPost)}>Remove</Button>
-          <Button onClick={() => handleReschedulePost(selectedPost)}>Reschedule</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
+  const PostDialog = () => {
+    const [editedPost, setEditedPost] = useState(selectedPost);
+
+    useEffect(() => {
+      setEditedPost(selectedPost);
+    }, [selectedPost]);
+
+    const handleInputChange = (e) => {
+      const { name, value } = e.target;
+      setEditedPost(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSave = () => {
+      // Here you would typically make an API call to update the post
+      console.log('Saving edited post:', editedPost);
+      setSelectedPost(null);
+      // Update the calendarData state with the edited post
+      setCalendarData(prevData => 
+        prevData.map(post => post.id === editedPost.id ? editedPost : post)
+      );
+    };
+
+    return (
+      <Dialog open={!!selectedPost} onOpenChange={() => setSelectedPost(null)}>
+        <DialogContent className="sm:max-w-[525px]">
+          <DialogHeader>
+            <DialogTitle>{editedPost?.title || 'Post Details'}</DialogTitle>
+          </DialogHeader>
+          <div className="mt-4 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Title</label>
+              <Input
+                name="title"
+                value={editedPost?.title || ''}
+                onChange={handleInputChange}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Date</label>
+              <Input
+                type="date"
+                name="date"
+                value={editedPost?.date ? format(parseISO(editedPost.date), 'yyyy-MM-dd') : ''}
+                onChange={handleInputChange}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Status</label>
+              <select
+                name="status"
+                value={editedPost?.status || ''}
+                onChange={handleInputChange}
+                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+              >
+                <option value="planned">Planned</option>
+                <option value="done">Done</option>
+              </select>
+            </div>
+            {editedPost?.image_url && (
+              <img src={editedPost.image_url} alt="Post" className="mt-2 max-w-full h-auto" />
+            )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Content</label>
+              <Textarea
+                name="content"
+                value={editedPost?.content || ''}
+                onChange={handleInputChange}
+                className="mt-1"
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => handleRemovePost(editedPost)}>Remove</Button>
+            <Button onClick={handleSave}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  };
 
   return (
     <div className="container mx-auto p-4 pb-40 min-h-screen overflow-y-auto">

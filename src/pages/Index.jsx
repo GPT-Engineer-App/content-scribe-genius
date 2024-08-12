@@ -233,13 +233,13 @@ const Index = () => {
   const handleGetCalendar = async () => {
     setActiveButton('get_calendar');
     setIsLoading(true);
+    setIsCalendarDialogOpen(true);
     try {
       const response = await axios.get('https://hook.eu1.make.com/kn986l8l6n8lod1vxti2wfgjoxntmsya?action=get_2weeks');
       const data = response.data;
       if (Array.isArray(data) && data.length > 0 && data[0].result === 'success') {
         const calendarList = data.map(item => item.calendar_list).flat();
         setCalendarData(calendarList);
-        setIsCalendarDialogOpen(true);
       } else {
         throw new Error('Invalid response format');
       }
@@ -275,32 +275,43 @@ const Index = () => {
           <DialogHeader>
             <DialogTitle>Calendar</DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-7 gap-2">
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-              <div key={day} className="text-center font-bold">{day}</div>
-            ))}
-            {days.map(day => {
-              const posts = calendarData.flat().filter(item => format(parseISO(item.date), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd'));
-              let className = "text-center p-2 rounded-full cursor-pointer";
-              if (posts.length > 0) {
-                if (posts.some(post => post.status === 'planned')) {
-                  className += " bg-orange-500 text-white font-bold";
-                } else if (posts.every(post => post.status === 'done')) {
-                  className += " bg-green-800 text-white font-bold";
+          {isLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-7 gap-2">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                <div key={day} className="text-center font-bold">{day}</div>
+              ))}
+              {days.map(day => {
+                const posts = calendarData.flat().filter(item => format(parseISO(item.date), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd'));
+                let className = "text-center p-2 rounded-full cursor-pointer";
+                if (posts.length > 0) {
+                  if (posts.some(post => post.status === 'planned')) {
+                    className += " bg-orange-500 text-white font-bold";
+                  } else if (posts.every(post => post.status === 'done')) {
+                    className += " bg-green-800 text-white font-bold";
+                  }
                 }
-              }
-              return (
-                <div
-                  key={day.toString()}
-                  className={className}
-                  onClick={() => posts.length > 0 && setSelectedPost(posts[0])}
-                >
-                  {format(day, 'd')}
-                  {posts.length > 1 && <span className="ml-1 text-xs">({posts.length})</span>}
-                </div>
-              );
-            })}
-          </div>
+                return (
+                  <div
+                    key={day.toString()}
+                    className={className}
+                    onClick={() => posts.length > 0 && setSelectedPost(posts[0])}
+                  >
+                    {format(day, 'd')}
+                    {posts.length > 1 && <span className="ml-1 text-xs">({posts.length})</span>}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {!isLoading && calendarData.length === 0 && (
+            <div className="text-center py-4">
+              <p>No calendar data available.</p>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     );

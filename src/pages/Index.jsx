@@ -253,16 +253,18 @@ const Index = () => {
         // Sort the calendar data by date
         calendarList.sort((a, b) => (a.date && b.date) ? a.date - b.date : 0);
         setCalendarData(calendarList);
-        console.log('Calendar data set:', calendarList); // Add this line for debugging
+        console.log('Calendar data set:', calendarList);
       } else {
         setCalendarData([]);
         console.log('No calendar data found or invalid format');
+        toast.warning('No scheduled posts found.');
       }
     } catch (error) {
       console.error('Error fetching calendar data:', error);
       toast.error('Failed to fetch calendar data. Please try again.');
       setCalendarResponse(JSON.stringify(error, null, 2)); // Store the error response
       setShowStickyLog(true);
+      setCalendarData([]);
     } finally {
       setIsLoading(false);
     }
@@ -586,7 +588,11 @@ const Index = () => {
             </div>
             <div className="mt-4 md:mt-0 bg-white p-4 rounded-md shadow-md flex-grow">
               <h3 className="text-lg font-semibold mb-2">Scheduled Posts</h3>
-              {calendarData.length > 0 ? (
+              {isLoading ? (
+                <div className="flex justify-center items-center h-32">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+              ) : calendarData.length > 0 ? (
                 <ul className="space-y-2 max-h-96 overflow-y-auto">
                   {calendarData.map((post, index) => (
                     <li key={index} className="flex items-center justify-between border-b pb-2">
@@ -611,11 +617,21 @@ const Index = () => {
                   ))}
                 </ul>
               ) : (
-                <p>No scheduled posts.</p>
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No scheduled posts found.</p>
+                  <Button
+                    onClick={handleGetCalendar}
+                    className="mt-4"
+                  >
+                    Refresh Calendar
+                  </Button>
+                </div>
               )}
-              <pre className="text-xs mt-4 bg-gray-100 p-2 rounded">
-                {JSON.stringify(calendarData, null, 2)}
-              </pre>
+              {calendarData.length > 0 && (
+                <pre className="text-xs mt-4 bg-gray-100 p-2 rounded">
+                  {JSON.stringify(calendarData, null, 2)}
+                </pre>
+              )}
             </div>
           </div>
         </div>

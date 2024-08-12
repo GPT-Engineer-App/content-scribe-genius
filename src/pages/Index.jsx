@@ -661,8 +661,6 @@ const Index = () => {
       )}
     </div>
   );
-};
-
 
   const [consoleLog, setConsoleLog] = useState([]);
 

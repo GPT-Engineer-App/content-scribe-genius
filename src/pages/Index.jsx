@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
-import { Loader2, Copy, RefreshCw, Send, Image, Upload, Repeat, Calendar } from "lucide-react"
+import { Loader2, Copy, RefreshCw, Send, Image, Upload, Repeat, Calendar, X } from "lucide-react"
 import JSON5 from 'json5';
 import {
   Dialog,
@@ -44,6 +44,10 @@ const Index = () => {
   const [selectedPost, setSelectedPost] = useState(null);
   const [isCalendarDialogOpen, setIsCalendarDialogOpen] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [calendarResponse, setCalendarResponse] = useState(null);
+  const [showStickyLog, setShowStickyLog] = useState(false);
+
+  const stickyLogRef = useRef(null);
 
   useEffect(() => {
     const savedContent = sessionStorage.getItem('generatedContent');
@@ -238,6 +242,8 @@ const Index = () => {
     try {
       const response = await axios.get('https://hook.eu1.make.com/kn986l8l6n8lod1vxti2wfgjoxntmsya?action=get_2weeks');
       const data = response.data;
+      setCalendarResponse(JSON.stringify(data, null, 2)); // Store the raw response
+      setShowStickyLog(true);
       if (Array.isArray(data) && data.length > 0) {
         let calendarList = [];
         data.forEach(item => {
@@ -259,6 +265,8 @@ const Index = () => {
     } catch (error) {
       console.error('Error fetching calendar data:', error);
       toast.error('Failed to fetch calendar data. Please try again.');
+      setCalendarResponse(JSON.stringify(error, null, 2)); // Store the error response
+      setShowStickyLog(true);
     } finally {
       setIsLoading(false);
     }
@@ -721,9 +729,28 @@ const Index = () => {
           </div>
         </div>
       )}
+      {showStickyLog && (
+        <div
+          ref={stickyLogRef}
+          className="fixed bottom-0 right-0 w-1/3 h-1/3 bg-white border border-gray-300 overflow-auto p-4 shadow-lg"
+          style={{ zIndex: 1000 }}
+        >
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-lg font-semibold">Calendar Response Log</h3>
+            <Button
+              onClick={() => setShowStickyLog(false)}
+              variant="ghost"
+              size="sm"
+              className="p-1"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <pre className="text-xs whitespace-pre-wrap">{calendarResponse}</pre>
+        </div>
+      )}
     </div>
   );
 };
-
 
 export default Index;

@@ -21,6 +21,7 @@ import { toast } from "sonner"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 const Index = () => {
   const [formData, setFormData] = useState({
@@ -238,7 +239,6 @@ const Index = () => {
   const handleGetCalendar = async () => {
     setActiveButton('get_calendar');
     setIsLoading(true);
-    setShowCalendar(true);
     try {
       const response = await axios.get('https://hook.eu1.make.com/kn986l8l6n8lod1vxti2wfgjoxntmsya?action=get_2weeks');
       const data = response.data;
@@ -435,207 +435,212 @@ const Index = () => {
   return (
     <div className="container mx-auto p-4 pb-40 min-h-screen overflow-y-auto">
       <h1 className="text-2xl font-bold mb-4 text-center sm:text-left">Content Generation App</h1>
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-          <Textarea
-            name="news"
-            id="news"
-            value={formData.news}
-            onChange={handleInputChange}
-            placeholder="Enter news..."
-            className="flex-grow"
-            rows={3}
-          />
-          <Button 
-            onClick={() => handleSubmit('get_news')} 
-            className="h-12 sm:h-24 sm:w-24 bg-gradient-to-r from-[#A062F9] to-[#1A77DA] hover:from-[#8A4EE8] hover:to-[#1665C0] transition-all duration-300 shadow-md hover:shadow-lg"
-          >
-            {activeButton === 'get_news' && isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              "Get News"
-            )}
-          </Button>
-        </div>
-        <Input
-          name="personal"
-          id="personal"
-          value={formData.personal}
-          onChange={handleInputChange}
-          placeholder="Personal"
-        />
-        <Input
-          name="controversial"
-          id="controversial"
-          value={formData.controversial}
-          onChange={handleInputChange}
-          placeholder="Controversial"
-        />
-        <Input
-          name="inspiring"
-          id="inspiring"
-          value={formData.inspiring}
-          onChange={handleInputChange}
-          placeholder="Inspiring"
-        />
-        <div className="flex space-x-2">
-          <Button 
-            onClick={() => handleSubmit('next_post')} 
-            disabled={isLoading}
-            className="bg-gradient-to-r from-[#A062F9] to-[#1A77DA] hover:from-[#8A4EE8] hover:to-[#1665C0] transition-all duration-300 shadow-md hover:shadow-lg"
-          >
-            {activeButton === 'next_post' && isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <>
-                <Send className="mr-2 h-4 w-4" />
-                Next Post
-              </>
-            )}
-          </Button>
-          <Button
-            onClick={handleGetCalendar}
-            disabled={isLoading}
-            className="bg-gradient-to-r from-[#FFA500] to-[#FF6347] hover:from-[#FF8C00] hover:to-[#FF4500] transition-all duration-300 shadow-md hover:shadow-lg"
-          >
-            {activeButton === 'get_calendar' && isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <>
-                <Calendar className="mr-2 h-4 w-4" />
-                Calendar
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
-
-      {isLoading && (
-        <div className="mt-4 flex items-center">
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          <p>Processing request, please wait...</p>
-        </div>
-      )}
-      {error && <p className="mt-4 text-red-500">Error: {error}</p>}
-
-      {data && !showCalendar && (
-        <div className="mt-8 pb-20">
-          <h2 className="text-xl font-semibold mb-2">Generated Content:</h2>
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              {image && (
-                <div className="mb-4 relative">
-                  <img src={image} alt="Generated" className="max-w-full h-auto rounded-md" />
-                  <Button
-                    className="absolute top-2 right-2 p-2 bg-white bg-opacity-70 rounded-full hover:bg-opacity-100 transition-all duration-200"
-                    onClick={() => handleSubmit('generate_image')}
-                  >
-                    <RefreshCw className="h-4 w-4 text-black" />
-                  </Button>
-                </div>
-              )}
-              {(draft || (data && data.result_text)) && (
-                <div className="bg-gray-100 p-4 rounded-md">
-                  <ReactMarkdown
-                    components={{
-                      p: ({ children }) => <p className="mb-4">{children}</p>,
-                      h1: ({ children }) => <h1 className="text-2xl font-bold mb-2">{children}</h1>,
-                      h2: ({ children }) => <h2 className="text-xl font-semibold mb-2">{children}</h2>,
-                      h3: ({ children }) => <h3 className="text-lg font-medium mb-2">{children}</h3>,
-                      ul: ({ children }) => <ul className="list-disc pl-5 mb-4">{children}</ul>,
-                      ol: ({ children }) => <ol className="list-decimal pl-5 mb-4">{children}</ol>,
-                      li: ({ children }) => <li className="mb-1">{children}</li>,
-                      blockquote: ({ children }) => <blockquote className="border-l-4 border-gray-300 pl-4 italic my-4">{children}</blockquote>,
-                      code: ({ node, inline, className, children, ...props }) => {
-                        const match = /language-(\w+)/.exec(className || '')
-                        return !inline && match ? (
-                          <SyntaxHighlighter
-                            style={vscDarkPlus}
-                            language={match[1]}
-                            PreTag="div"
-                            {...props}
-                          >
-                            {String(children).replace(/\n$/, '')}
-                          </SyntaxHighlighter>
-                        ) : (
-                          <code className={className} {...props}>
-                            {children}
-                          </code>
-                        )
-                      },
-                    }}
-                  >
-                    {draft || (data && data.result_text) || ''}
-                  </ReactMarkdown>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-      {showCalendar && (
-        <div className="mt-8 pb-20">
-          <h2 className="text-xl font-semibold mb-2">Calendar</h2>
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="bg-white p-4 rounded-md shadow-md">
-              <CalendarComponent
-                mode="single"
-                selected={scheduledDate}
-                onSelect={setScheduledDate}
-                className="rounded-md border"
-                weekStartsOn={1}
+      <Tabs defaultValue="content" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="content">Content</TabsTrigger>
+          <TabsTrigger value="calendar">Calendar</TabsTrigger>
+        </TabsList>
+        <TabsContent value="content">
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+              <Textarea
+                name="news"
+                id="news"
+                value={formData.news}
+                onChange={handleInputChange}
+                placeholder="Enter news..."
+                className="flex-grow"
+                rows={3}
               />
+              <Button 
+                onClick={() => handleSubmit('get_news')} 
+                className="h-12 sm:h-24 sm:w-24 bg-gradient-to-r from-[#A062F9] to-[#1A77DA] hover:from-[#8A4EE8] hover:to-[#1665C0] transition-all duration-300 shadow-md hover:shadow-lg"
+              >
+                {activeButton === 'get_news' && isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Get News"
+                )}
+              </Button>
             </div>
-            <div className="mt-4 md:mt-0 bg-white p-4 rounded-md shadow-md flex-grow">
-              <h3 className="text-lg font-semibold mb-2">Scheduled Posts</h3>
-              {isLoading ? (
-                <div className="flex justify-center items-center h-32">
-                  <Loader2 className="h-8 w-8 animate-spin" />
-                </div>
-              ) : calendarData.length > 0 ? (
-                <ul className="space-y-2 max-h-96 overflow-y-auto">
-                  {calendarData.map((post, index) => (
-                    <li key={index} className="flex items-center justify-between border-b pb-2">
-                      <span>{post.formatted_date}: {post.title || 'Untitled'}</span>
-                      <div>
-                        <Button
-                          onClick={() => handleReschedulePost(post)}
-                          className="mr-2 text-sm"
-                          variant="outline"
-                        >
-                          Reschedule
-                        </Button>
-                        <Button
-                          onClick={() => handleRemovePost(post)}
-                          className="text-sm"
-                          variant="destructive"
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">No scheduled posts found.</p>
-                  <Button
-                    onClick={handleGetCalendar}
-                    className="mt-4"
-                  >
-                    Refresh Calendar
-                  </Button>
-                </div>
-              )}
-              {calendarData.length > 0 && (
-                <pre className="text-xs mt-4 bg-gray-100 p-2 rounded">
-                  {JSON.stringify(calendarData, null, 2)}
-                </pre>
-              )}
+            <Input
+              name="personal"
+              id="personal"
+              value={formData.personal}
+              onChange={handleInputChange}
+              placeholder="Personal"
+            />
+            <Input
+              name="controversial"
+              id="controversial"
+              value={formData.controversial}
+              onChange={handleInputChange}
+              placeholder="Controversial"
+            />
+            <Input
+              name="inspiring"
+              id="inspiring"
+              value={formData.inspiring}
+              onChange={handleInputChange}
+              placeholder="Inspiring"
+            />
+            <div className="flex space-x-2">
+              <Button 
+                onClick={() => handleSubmit('next_post')} 
+                disabled={isLoading}
+                className="bg-gradient-to-r from-[#A062F9] to-[#1A77DA] hover:from-[#8A4EE8] hover:to-[#1665C0] transition-all duration-300 shadow-md hover:shadow-lg"
+              >
+                {activeButton === 'next_post' && isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <Send className="mr-2 h-4 w-4" />
+                    Next Post
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={() => handleSubmit('generate')}
+                disabled={isLoading}
+                className="bg-gradient-to-r from-[#4CAF50] to-[#45a049] hover:from-[#45a049] hover:to-[#4CAF50] transition-all duration-300 shadow-md hover:shadow-lg"
+              >
+                {activeButton === 'generate' && isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Generate"
+                )}
+              </Button>
             </div>
           </div>
-        </div>
-      )}
+
+          {isLoading && (
+            <div className="mt-4 flex items-center">
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <p>Processing request, please wait...</p>
+            </div>
+          )}
+          {error && <p className="mt-4 text-red-500">Error: {error}</p>}
+
+          {data && (
+            <div className="mt-8 pb-20">
+              <h2 className="text-xl font-semibold mb-2">Generated Content:</h2>
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  {image && (
+                    <div className="mb-4 relative">
+                      <img src={image} alt="Generated" className="max-w-full h-auto rounded-md" />
+                      <Button
+                        className="absolute top-2 right-2 p-2 bg-white bg-opacity-70 rounded-full hover:bg-opacity-100 transition-all duration-200"
+                        onClick={() => handleSubmit('generate_image')}
+                      >
+                        <RefreshCw className="h-4 w-4 text-black" />
+                      </Button>
+                    </div>
+                  )}
+                  {(draft || (data && data.result_text)) && (
+                    <div className="bg-gray-100 p-4 rounded-md">
+                      <ReactMarkdown
+                        components={{
+                          p: ({ children }) => <p className="mb-4">{children}</p>,
+                          h1: ({ children }) => <h1 className="text-2xl font-bold mb-2">{children}</h1>,
+                          h2: ({ children }) => <h2 className="text-xl font-semibold mb-2">{children}</h2>,
+                          h3: ({ children }) => <h3 className="text-lg font-medium mb-2">{children}</h3>,
+                          ul: ({ children }) => <ul className="list-disc pl-5 mb-4">{children}</ul>,
+                          ol: ({ children }) => <ol className="list-decimal pl-5 mb-4">{children}</ol>,
+                          li: ({ children }) => <li className="mb-1">{children}</li>,
+                          blockquote: ({ children }) => <blockquote className="border-l-4 border-gray-300 pl-4 italic my-4">{children}</blockquote>,
+                          code: ({ node, inline, className, children, ...props }) => {
+                            const match = /language-(\w+)/.exec(className || '')
+                            return !inline && match ? (
+                              <SyntaxHighlighter
+                                style={vscDarkPlus}
+                                language={match[1]}
+                                PreTag="div"
+                                {...props}
+                              >
+                                {String(children).replace(/\n$/, '')}
+                              </SyntaxHighlighter>
+                            ) : (
+                              <code className={className} {...props}>
+                                {children}
+                              </code>
+                            )
+                          },
+                        }}
+                      >
+                        {draft || (data && data.result_text) || ''}
+                      </ReactMarkdown>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </TabsContent>
+        <TabsContent value="calendar">
+          <div className="mt-8 pb-20">
+            <h2 className="text-xl font-semibold mb-2">Calendar</h2>
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="bg-white p-4 rounded-md shadow-md">
+                <CalendarComponent
+                  mode="single"
+                  selected={scheduledDate}
+                  onSelect={setScheduledDate}
+                  className="rounded-md border"
+                  weekStartsOn={1}
+                />
+              </div>
+              <div className="mt-4 md:mt-0 bg-white p-4 rounded-md shadow-md flex-grow">
+                <h3 className="text-lg font-semibold mb-2">Scheduled Posts</h3>
+                {isLoading ? (
+                  <div className="flex justify-center items-center h-32">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : calendarData.length > 0 ? (
+                  <ul className="space-y-2 max-h-96 overflow-y-auto">
+                    {calendarData.map((post, index) => (
+                      <li key={index} className="flex items-center justify-between border-b pb-2">
+                        <span>{post.formatted_date}: {post.title || 'Untitled'}</span>
+                        <div>
+                          <Button
+                            onClick={() => handleReschedulePost(post)}
+                            className="mr-2 text-sm"
+                            variant="outline"
+                          >
+                            Reschedule
+                          </Button>
+                          <Button
+                            onClick={() => handleRemovePost(post)}
+                            className="text-sm"
+                            variant="destructive"
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">No scheduled posts found.</p>
+                    <Button
+                      onClick={handleGetCalendar}
+                      className="mt-4"
+                    >
+                      Refresh Calendar
+                    </Button>
+                  </div>
+                )}
+                {calendarData.length > 0 && (
+                  <pre className="text-xs mt-4 bg-gray-100 p-2 rounded">
+                    {JSON.stringify(calendarData, null, 2)}
+                  </pre>
+                )}
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
       {draft && (
         <div className="fixed bottom-0 left-0 right-0 bg-white bg-opacity-60 backdrop-blur-sm p-4 shadow-md">
           <div className="container mx-auto flex flex-wrap justify-center gap-2 mb-2">

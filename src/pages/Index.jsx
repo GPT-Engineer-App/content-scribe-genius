@@ -244,23 +244,19 @@ const Index = () => {
       const data = response.data;
       setCalendarResponse(JSON.stringify(data, null, 2)); // Store the raw response
       setShowStickyLog(true);
-      if (Array.isArray(data) && data.length > 0) {
-        let calendarList = [];
-        data.forEach(item => {
-          if (item.calendar_list && Array.isArray(item.calendar_list)) {
-            calendarList = calendarList.concat(item.calendar_list.map(post => ({
-              ...post,
-              date: post.date ? parseISO(post.date) : null,
-              formatted_date: post.formatted_date || (post.date ? format(parseISO(post.date), 'MMM dd, yyyy') : 'No date')
-            })));
-          }
-        });
+      if (Array.isArray(data) && data.length > 0 && data[0].calendar_list) {
+        let calendarList = data[0].calendar_list.map(post => ({
+          ...post,
+          date: post.date ? parseISO(post.date) : null,
+          formatted_date: post.date ? format(parseISO(post.date), 'MMM dd, yyyy') : 'No date'
+        }));
         // Sort the calendar data by date
         calendarList.sort((a, b) => (a.date && b.date) ? a.date - b.date : 0);
         setCalendarData(calendarList);
         console.log('Calendar data set:', calendarList); // Add this line for debugging
       } else {
-        throw new Error('Invalid response format');
+        setCalendarData([]);
+        console.log('No calendar data found or invalid format');
       }
     } catch (error) {
       console.error('Error fetching calendar data:', error);
@@ -617,6 +613,9 @@ const Index = () => {
               ) : (
                 <p>No scheduled posts.</p>
               )}
+              <pre className="text-xs mt-4 bg-gray-100 p-2 rounded">
+                {JSON.stringify(calendarData, null, 2)}
+              </pre>
             </div>
           </div>
         </div>

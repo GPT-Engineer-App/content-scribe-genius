@@ -43,6 +43,7 @@ const Index = () => {
   const [calendarData, setCalendarData] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
   const [isCalendarDialogOpen, setIsCalendarDialogOpen] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
 
   useEffect(() => {
     const savedContent = sessionStorage.getItem('generatedContent');
@@ -233,7 +234,7 @@ const Index = () => {
   const handleGetCalendar = async () => {
     setActiveButton('get_calendar');
     setIsLoading(true);
-    setIsCalendarDialogOpen(true);
+    setShowCalendar(true);
     try {
       const response = await axios.get('https://hook.eu1.make.com/kn986l8l6n8lod1vxti2wfgjoxntmsya?action=get_2weeks');
       const data = response.data;
@@ -425,7 +426,7 @@ const Index = () => {
       )}
       {error && <p className="mt-4 text-red-500">Error: {error}</p>}
 
-      {data && (
+      {data && !showCalendar && (
         <div className="mt-8 pb-20">
           <h2 className="text-xl font-semibold mb-2">Generated Content:</h2>
           <div className="flex flex-col md:flex-row gap-4">
@@ -477,6 +478,20 @@ const Index = () => {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+      {showCalendar && (
+        <div className="mt-8 pb-20">
+          <h2 className="text-xl font-semibold mb-2">Calendar</h2>
+          <div className="bg-white p-4 rounded-md shadow-md">
+            <CalendarComponent
+              mode="single"
+              selected={scheduledDate}
+              onSelect={setScheduledDate}
+              className="rounded-md border"
+              weekStartsOn={1}
+            />
           </div>
         </div>
       )}
@@ -592,12 +607,5 @@ const Index = () => {
   );
 };
 
-const CalendarDialog = () => {
-  // ... (CalendarDialog component implementation)
-};
-
-const PostDialog = () => {
-  // ... (PostDialog component implementation)
-};
 
 export default Index;

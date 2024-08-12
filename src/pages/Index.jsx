@@ -19,7 +19,14 @@ import {
 import { toast } from "sonner"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { format } from "date-fns"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns"
 
 const Index = () => {
   const [formData, setFormData] = useState({
@@ -39,6 +46,9 @@ const Index = () => {
   const [dialogContent, setDialogContent] = useState(null);
   const [activeButton, setActiveButton] = useState(null);
   const [scheduledDate, setScheduledDate] = useState(null);
+  const [calendarData, setCalendarData] = useState([]);
+  const [selectedPost, setSelectedPost] = useState(null);
+  const [isCalendarDialogOpen, setIsCalendarDialogOpen] = useState(false);
 
   useEffect(() => {
     const savedContent = sessionStorage.getItem('generatedContent');
@@ -226,6 +236,101 @@ const Index = () => {
     document.body.removeChild(textArea);
   };
 
+  const handleGetCalendar = async () => {
+    setActiveButton('get_calendar');
+    setIsLoading(true);
+    try {
+      const response = await axios.get('https://hook.eu1.make.com/kn986l8l6n8lod1vxti2wfgjoxntmsya?action=get_2weeks');
+      const data = response.data;
+      if (Array.isArray(data) && data.length > 0 && data[0].result === 'success') {
+        setCalendarData(data.map(item => item.calendar_list));
+        setIsCalendarDialogOpen(true);
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (error) {
+      console.error('Error fetching calendar data:', error);
+      toast.error('Failed to fetch calendar data. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRemovePost = (post) => {
+    // Implement remove functionality
+    console.log('Removing post:', post);
+    setSelectedPost(null);
+  };
+
+  const handleReschedulePost = (post) => {
+    // Implement reschedule functionality
+    console.log('Rescheduling post:', post);
+    setSelectedPost(null);
+  };
+
+  const CalendarDialog = () => {
+    const today = new Date();
+    const monthStart = startOfMonth(today);
+    const monthEnd = endOfMonth(today);
+    const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+
+    return (
+      <Dialog open={isCalendarDialogOpen} onOpenChange={setIsCalendarDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Calendar</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-7 gap-2">
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+              <div key={day} className="text-center font-bold">{day}</div>
+            ))}
+            {days.map(day => {
+              const post = calendarData.find(item => format(parseISO(item.date), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd'));
+              let className = "text-center p-2 rounded-full";
+              if (post) {
+                if (post.status === 'planned') {
+                  className += " bg-orange-500 text-white font-bold";
+                } else if (post.status === 'done') {
+                  className += " bg-green-800 text-white font-bold";
+                }
+              }
+              return (
+                <div
+                  key={day.toString()}
+                  className={className}
+                  onClick={() => post && setSelectedPost(post)}
+                >
+                  {format(day, 'd')}
+                </div>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  };
+
+  const PostDialog = () => (
+    <Dialog open={!!selectedPost} onOpenChange={() => setSelectedPost(null)}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>{selectedPost?.title}</DialogTitle>
+        </DialogHeader>
+        <div className="mt-4">
+          <p><strong>Date:</strong> {format(parseISO(selectedPost?.date), 'PPP')}</p>
+          {selectedPost?.image_url && (
+            <img src={selectedPost.image_url} alt="Post" className="mt-2 max-w-full h-auto" />
+          )}
+          <p className="mt-2"><strong>Content:</strong> {selectedPost?.content}</p>
+        </div>
+        <DialogFooter>
+          <Button onClick={() => handleRemovePost(selectedPost)}>Remove</Button>
+          <Button onClick={() => handleReschedulePost(selectedPost)}>Reschedule</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+
   return (
     <div className="container mx-auto p-4 pb-40 min-h-screen overflow-y-auto">
       <h1 className="text-2xl font-bold mb-4 text-center sm:text-left">Content Generation App</h1>
@@ -272,20 +377,36 @@ const Index = () => {
           onChange={handleInputChange}
           placeholder="Inspiring"
         />
-        <Button 
-          onClick={() => handleSubmit('generate')} 
-          disabled={isLoading}
-          className="bg-gradient-to-r from-[#A062F9] to-[#1A77DA] hover:from-[#8A4EE8] hover:to-[#1665C0] transition-all duration-300 shadow-md hover:shadow-lg"
-        >
-          {activeButton === 'generate' && isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <>
-              <Send className="mr-2 h-4 w-4" />
-              Generate
-            </>
-          )}
-        </Button>
+        <div className="flex space-x-2">
+          <Button 
+            onClick={() => handleSubmit('generate')} 
+            disabled={isLoading}
+            className="bg-gradient-to-r from-[#A062F9] to-[#1A77DA] hover:from-[#8A4EE8] hover:to-[#1665C0] transition-all duration-300 shadow-md hover:shadow-lg"
+          >
+            {activeButton === 'generate' && isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <Send className="mr-2 h-4 w-4" />
+                Generate
+              </>
+            )}
+          </Button>
+          <Button
+            onClick={handleGetCalendar}
+            disabled={isLoading}
+            className="bg-gradient-to-r from-[#FFA500] to-[#FF6347] hover:from-[#FF8C00] hover:to-[#FF4500] transition-all duration-300 shadow-md hover:shadow-lg"
+          >
+            {activeButton === 'get_calendar' && isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <Calendar className="mr-2 h-4 w-4" />
+                Calendar
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       {isLoading && (
@@ -460,6 +581,8 @@ const Index = () => {
         </div>
       )}
     </div>
+    <CalendarDialog />
+    <PostDialog />
   );
 };
 

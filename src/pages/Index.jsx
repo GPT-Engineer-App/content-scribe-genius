@@ -3,16 +3,13 @@ import axios from 'axios';
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
-import { useQuery } from "@tanstack/react-query";
 import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
-import { Loader2, Copy, RefreshCw, Send, Image, Upload, Repeat, Calendar } from "lucide-react"
-import JSON5 from 'json5';
+import { Loader2, RefreshCw, Send, Image, Upload, Repeat, Calendar } from "lucide-react"
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -20,7 +17,7 @@ import {
 import { toast } from "sonner"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns"
+import { format, parseISO } from "date-fns"
 
 const Index = () => {
   const [formData, setFormData] = useState({
@@ -31,19 +28,12 @@ const Index = () => {
   });
   const [draft, setDraft] = useState('');
   const [image, setImage] = useState(null);
-  const [fileName, setFileName] = useState('');
-  const [imageUploaded, setImageUploaded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [data, setData] = useState(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [dialogContent, setDialogContent] = useState(null);
   const [activeButton, setActiveButton] = useState(null);
   const [scheduledDate, setScheduledDate] = useState(null);
   const [calendarData, setCalendarData] = useState([]);
-  const [selectedPost, setSelectedPost] = useState(null);
-  const [isCalendarDialogOpen, setIsCalendarDialogOpen] = useState(false);
-  const [showCalendar, setShowCalendar] = useState(false);
 
   useEffect(() => {
     const savedContent = sessionStorage.getItem('generatedContent');
@@ -92,7 +82,6 @@ const Index = () => {
   };
 
   const makeWebhookCall = async (action = 'generate') => {
-    console.log(`Starting webhook call for action: ${action}`);
     setIsLoading(true);
     setError(null);
     try {
@@ -101,12 +90,8 @@ const Index = () => {
         action,
         draft,
         image: image || null,
-        file_name: fileName || null,
-        image_url: data?.result_image || null,
         scheduled_date: scheduledDate ? format(scheduledDate, 'yyyy-MM-dd') : null,
       };
-      console.log('Payload prepared:', payload);
-      setImageUploaded(false); // Reset the flag after sending the request
 
       const response = await axios.put('https://hook.eu1.make.com/7hok9kqjre31fea5p7yi9ialusmbvlkc', payload, {
         headers: {
@@ -115,55 +100,19 @@ const Index = () => {
         },
       });
       
-      console.log("Raw webhook response:", response.data);
-      
       if (response.status === 200 && response.data) {
-        let parsedData = response.data;
+        let parsedData = Array.isArray(response.data) ? response.data[0] : response.data;
         
-        // Check if the response is a string, if so, try to parse it
-        if (typeof response.data === 'string') {
-          try {
-            parsedData = JSON.parse(response.data);
-          } catch (parseError) {
-            console.error('Error parsing response:', parseError);
-            throw new Error('Failed to parse server response');
-          }
-        }
-        
-        // If parsedData is an array, take the first item
-        if (Array.isArray(parsedData)) {
-          parsedData = parsedData[0];
-        }
-        
-        console.log('Parsed response data:', parsedData);
-        addToConsoleLog(parsedData);
-        
-        // Function to sanitize text
         const sanitizeText = (text) => {
           if (typeof text !== 'string') return text;
           return text.replace(/\\n/g, '\n').replace(/\\/g, '');
         };
         
-        // Extract and sanitize the result_text and is_news
-        let sanitizedText, is_news;
-        if (Array.isArray(parsedData) && parsedData.length > 0) {
-          const firstItem = parsedData[0];
-          sanitizedText = sanitizeText(firstItem.result_text);
-          is_news = firstItem.is_news;
-        } else if (typeof parsedData === 'object' && parsedData !== null) {
-          sanitizedText = sanitizeText(parsedData.result_text);
-          is_news = parsedData.is_news;
-        } else {
-          throw new Error('Unexpected response format from server');
-        }
-        
-        if (sanitizedText === undefined || is_news === undefined) {
-          throw new Error('Missing required data in server response');
-        }
-        
+        const sanitizedText = sanitizeText(parsedData.result_text);
+        const is_news = parsedData.is_news;
         const result_image = parsedData.result_image || '';
+        
         setData({ result_text: sanitizedText, is_news, result_image });
-        console.log('Extracted data:', { result_text: sanitizedText, is_news, result_image });
         
         if (is_news) {
           setFormData(prevData => ({ ...prevData, news: sanitizedText }));
@@ -175,28 +124,15 @@ const Index = () => {
           setImage(result_image);
         }
 
-        // Store the generated content in sessionStorage
         sessionStorage.setItem('generatedContent', JSON.stringify({ result_text: sanitizedText, is_news, result_image }));
-        console.log('Content stored in sessionStorage');
       } else {
         throw new Error('Unexpected response from server');
       }
     } catch (err) {
       console.error('Error in makeWebhookCall:', err);
-      let errorMessage;
-      if (err.response) {
-        errorMessage = `Server error: ${err.response.status} ${err.response.statusText}`;
-      } else if (err.request) {
-        errorMessage = 'No response received from the server. Please check your network connection.';
-      } else {
-        errorMessage = err.message || 'An unknown error occurred';
-      }
-      setError(errorMessage);
-      setDialogContent({ error: errorMessage });
-      setDialogOpen(true);
+      setError(err.message || 'An unknown error occurred');
     } finally {
       setIsLoading(false);
-      console.log('Webhook call completed');
     }
   };
 

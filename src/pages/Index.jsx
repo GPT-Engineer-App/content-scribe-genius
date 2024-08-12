@@ -136,6 +136,7 @@ const Index = () => {
         }
         
         console.log('Parsed response data:', parsedData);
+        addToConsoleLog(parsedData);
         
         // Function to sanitize text
         const sanitizeText = (text) => {
@@ -238,6 +239,7 @@ const Index = () => {
     try {
       const response = await axios.get('https://hook.eu1.make.com/kn986l8l6n8lod1vxti2wfgjoxntmsya?action=get_2weeks');
       const data = response.data;
+      addToConsoleLog(data); // Log the calendar data
       if (Array.isArray(data) && data.length > 0) {
         let calendarList = [];
         data.forEach(item => {
@@ -252,7 +254,7 @@ const Index = () => {
         // Sort the calendar data by date
         calendarList.sort((a, b) => (a.date && b.date) ? a.date - b.date : 0);
         setCalendarData(calendarList);
-        console.log('Calendar data set:', calendarList); // Add this line for debugging
+        console.log('Calendar data set:', calendarList);
       } else {
         throw new Error('Invalid response format');
       }
@@ -725,5 +727,45 @@ const Index = () => {
   );
 };
 
+
+  const [consoleLog, setConsoleLog] = useState([]);
+
+  useEffect(() => {
+    const savedLog = sessionStorage.getItem('consoleLog');
+    if (savedLog) {
+      setConsoleLog(JSON.parse(savedLog));
+    }
+  }, []);
+
+  useEffect(() => {
+    sessionStorage.setItem('consoleLog', JSON.stringify(consoleLog));
+  }, [consoleLog]);
+
+  const addToConsoleLog = (message) => {
+    setConsoleLog(prevLog => {
+      const newLog = [...prevLog, message];
+      if (newLog.length > 5) {
+        newLog.shift();
+      }
+      return newLog;
+    });
+  };
+
+  return (
+    <div className="container mx-auto p-4 pb-40 min-h-screen overflow-y-auto">
+      {/* ... existing content ... */}
+      
+      {/* Sticky Console Log */}
+      <div className="fixed bottom-0 left-0 right-0 bg-black bg-opacity-80 text-white p-4 font-mono text-sm z-50">
+        <h3 className="text-lg font-semibold mb-2">Console Log:</h3>
+        <div className="max-h-40 overflow-y-auto">
+          {consoleLog.map((log, index) => (
+            <pre key={index} className="mb-1">{JSON.stringify(log, null, 2)}</pre>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default Index;

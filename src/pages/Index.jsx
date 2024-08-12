@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
-import { Loader2, Copy, RefreshCw, Send, Image, Upload, Repeat, Calendar, X } from "lucide-react"
+import { Loader2, Copy, RefreshCw, Send, Image, Upload, Repeat, Calendar, X, Settings } from "lucide-react"
 import JSON5 from 'json5';
 import {
   Dialog,
@@ -22,6 +22,12 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 const Index = () => {
   const [formData, setFormData] = useState({
@@ -452,65 +458,67 @@ const Index = () => {
                 className="flex-grow"
                 rows={3}
               />
-              <Button 
-                onClick={() => handleSubmit('get_news')} 
-                className="h-12 sm:h-24 sm:w-24 bg-gradient-to-r from-[#A062F9] to-[#1A77DA] hover:from-[#8A4EE8] hover:to-[#1665C0] transition-all duration-300 shadow-md hover:shadow-lg"
-              >
-                {activeButton === 'get_news' && isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  "Get News"
-                )}
-              </Button>
+              <div className="flex flex-col space-y-2">
+                <Button 
+                  onClick={() => handleSubmit('get_news')} 
+                  className="h-12 sm:h-24 sm:w-24 bg-gradient-to-r from-[#A062F9] to-[#1A77DA] hover:from-[#8A4EE8] hover:to-[#1665C0] transition-all duration-300 shadow-md hover:shadow-lg"
+                >
+                  {activeButton === 'get_news' && isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Get News"
+                  )}
+                </Button>
+                <Button
+                  onClick={() => handleSubmit('generate')}
+                  disabled={isLoading}
+                  className="h-12 sm:h-24 sm:w-24 bg-gradient-to-r from-[#4CAF50] to-[#45a049] hover:from-[#45a049] hover:to-[#4CAF50] transition-all duration-300 shadow-md hover:shadow-lg"
+                >
+                  {activeButton === 'generate' && isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Generate"
+                  )}
+                </Button>
+              </div>
             </div>
-            <Input
-              name="personal"
-              id="personal"
-              value={formData.personal}
-              onChange={handleInputChange}
-              placeholder="Personal"
-            />
-            <Input
-              name="controversial"
-              id="controversial"
-              value={formData.controversial}
-              onChange={handleInputChange}
-              placeholder="Controversial"
-            />
-            <Input
-              name="inspiring"
-              id="inspiring"
-              value={formData.inspiring}
-              onChange={handleInputChange}
-              placeholder="Inspiring"
-            />
-            <div className="flex space-x-2">
-              <Button 
-                onClick={() => handleSubmit('next_post')} 
-                disabled={isLoading}
-                className="bg-gradient-to-r from-[#A062F9] to-[#1A77DA] hover:from-[#8A4EE8] hover:to-[#1665C0] transition-all duration-300 shadow-md hover:shadow-lg"
-              >
-                {activeButton === 'next_post' && isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    <Send className="mr-2 h-4 w-4" />
-                    Next Post
-                  </>
-                )}
-              </Button>
-              <Button
-                onClick={() => handleSubmit('generate')}
-                disabled={isLoading}
-                className="bg-gradient-to-r from-[#4CAF50] to-[#45a049] hover:from-[#45a049] hover:to-[#4CAF50] transition-all duration-300 shadow-md hover:shadow-lg"
-              >
-                {activeButton === 'generate' && isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  "Generate"
-                )}
-              </Button>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <Input
+                name="personal"
+                id="personal"
+                value={formData.personal}
+                onChange={handleInputChange}
+                placeholder="Personal"
+              />
+              <Input
+                name="controversial"
+                id="controversial"
+                value={formData.controversial}
+                onChange={handleInputChange}
+                placeholder="Controversial"
+              />
+              <Input
+                name="inspiring"
+                id="inspiring"
+                value={formData.inspiring}
+                onChange={handleInputChange}
+                placeholder="Inspiring"
+              />
             </div>
+            <Button 
+              onClick={() => handleSubmit('next_post')} 
+              disabled={isLoading}
+              className="w-full bg-gradient-to-r from-[#A062F9] to-[#1A77DA] hover:from-[#8A4EE8] hover:to-[#1665C0] transition-all duration-300 shadow-md hover:shadow-lg"
+            >
+              {activeButton === 'next_post' && isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  <Send className="mr-2 h-4 w-4" />
+                  Next Post
+                </>
+              )}
+            </Button>
           </div>
 
           {isLoading && (
@@ -643,46 +651,29 @@ const Index = () => {
       </Tabs>
       {draft && (
         <div className="fixed bottom-0 left-0 right-0 bg-white bg-opacity-60 backdrop-blur-sm p-4 shadow-md">
-          <div className="container mx-auto flex flex-wrap justify-center gap-2 mb-2">
-            <div className="w-full sm:w-auto">
-              <Button 
-                onClick={() => handleSubmit('re-generate')}
-                className="w-full sm:w-auto text-sm sm:text-base py-1 sm:py-2 px-2 sm:px-4"
-              >
-              {activeButton === 're-generate' && isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <>
+          <div className="container mx-auto flex justify-center gap-2 mb-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className="w-full sm:w-auto">
+                  <Settings className="mr-2 h-4 w-4" />
+                  Actions
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => handleSubmit('re-generate')}>
                   <Repeat className="mr-2 h-4 w-4" />
                   Re-generate
-                </>
-              )}
-            </Button>
-            </div>
-            <div className="w-full sm:w-auto">
-              <Button 
-                onClick={() => handleSubmit('generate_image')}
-                className="w-full sm:w-auto text-sm sm:text-base py-1 sm:py-2 px-2 sm:px-4"
-              >
-              {activeButton === 'generate_image' && isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSubmit('generate_image')}>
                   <Image className="mr-2 h-4 w-4" />
                   Generate Image
-                </>
-              )}
-              </Button>
-            </div>
-            <div className="w-full sm:w-auto">
-              <Button 
-                onClick={() => document.getElementById('imageUpload').click()}
-                className="w-full sm:w-auto text-sm sm:text-base py-1 sm:py-2 px-2 sm:px-4"
-              >
-              <Upload className="mr-2 h-4 w-4" />
-              Upload Image
-              </Button>
-            </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => document.getElementById('imageUpload').click()}>
+                  <Upload className="mr-2 h-4 w-4" />
+                  Upload Image
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <input
               id="imageUpload"
               type="file"
@@ -690,11 +681,10 @@ const Index = () => {
               onChange={handleImageUpload}
               className="hidden"
             />
-            <div className="w-full sm:w-auto flex">
-              <Button 
-                onClick={() => handleSubmit('post_linkedin')}
-                className="flex-grow sm:flex-grow-0 text-sm sm:text-base py-1 sm:py-2 px-2 sm:px-4 bg-[#0A66C2] hover:bg-[#004182]"
-              >
+            <Button 
+              onClick={() => handleSubmit('post_linkedin')}
+              className="w-full sm:w-auto bg-[#0A66C2] hover:bg-[#004182]"
+            >
               {activeButton === 'post_linkedin' && isLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
@@ -703,42 +693,41 @@ const Index = () => {
                   Post on LinkedIn
                 </>
               )}
-              </Button>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={`ml-2 w-10 h-10 p-0 ${
-                      scheduledDate 
-                        ? 'bg-red-500 hover:bg-red-600' 
-                        : 'bg-[#0A66C2] hover:bg-[#004182]'
-                    } text-white`}
-                    onClick={(e) => {
-                      if (scheduledDate) {
-                        e.preventDefault();
-                        setScheduledDate(null);
-                      }
-                    }}
-                  >
-                    <Calendar className="h-4 w-4" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="end">
-                  <CalendarComponent
-                    mode="single"
-                    selected={scheduledDate}
-                    onSelect={(date) => {
-                      if (date === scheduledDate) {
-                        setScheduledDate(null);
-                      } else {
-                        setScheduledDate(date);
-                      }
-                    }}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
+            </Button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={`w-10 h-10 p-0 ${
+                    scheduledDate 
+                      ? 'bg-red-500 hover:bg-red-600' 
+                      : 'bg-[#0A66C2] hover:bg-[#004182]'
+                  } text-white`}
+                  onClick={(e) => {
+                    if (scheduledDate) {
+                      e.preventDefault();
+                      setScheduledDate(null);
+                    }
+                  }}
+                >
+                  <Calendar className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <CalendarComponent
+                  mode="single"
+                  selected={scheduledDate}
+                  onSelect={(date) => {
+                    if (date === scheduledDate) {
+                      setScheduledDate(null);
+                    } else {
+                      setScheduledDate(date);
+                    }
+                  }}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
           </div>
           <div className="container mx-auto text-center mt-2 h-6">
             {scheduledDate ? (

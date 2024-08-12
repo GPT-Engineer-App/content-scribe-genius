@@ -15,17 +15,11 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog"
 import { toast } from "sonner"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog"
 import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns"
 
 const Index = () => {
@@ -581,9 +575,15 @@ const Index = () => {
         </div>
       )}
     </div>
-    <CalendarDialog />
-    <PostDialog />
   );
+};
+
+const CalendarDialog = () => {
+  // ... (CalendarDialog component implementation)
+};
+
+const PostDialog = () => {
+  // ... (PostDialog component implementation)
 };
 
 export default Index;

@@ -239,9 +239,18 @@ const Index = () => {
       const response = await axios.get('https://hook.eu1.make.com/kn986l8l6n8lod1vxti2wfgjoxntmsya?action=get_2weeks');
       const data = response.data;
       if (Array.isArray(data) && data.length > 0 && data[0].result === 'success') {
-        const calendarList = data.map(item => item.calendar_list).flat();
+        const calendarList = data.flatMap(item => {
+          if (Array.isArray(item.calendar_list)) {
+            return item.calendar_list.map(post => ({
+              ...post,
+              date: post.date ? parseISO(post.date) : null,
+              formatted_date: post.formatted_date || format(parseISO(post.date), 'MMM dd, yyyy')
+            }));
+          }
+          return [];
+        });
         // Sort the calendar data by date
-        calendarList.sort((a, b) => new Date(a.date) - new Date(b.date));
+        calendarList.sort((a, b) => a.date - b.date);
         setCalendarData(calendarList);
       } else {
         throw new Error('Invalid response format');
@@ -299,7 +308,7 @@ const Index = () => {
                 <div key={day} className="text-center font-bold">{day}</div>
               ))}
               {days.map(day => {
-                const posts = calendarData.filter(item => format(parseISO(item.date), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd'));
+                const posts = calendarData.filter(item => item.date && format(item.date, 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd'));
                 return (
                   <div
                     key={day.toString()}
@@ -312,7 +321,8 @@ const Index = () => {
                         className={`${getPostColor(post.status)} text-white text-xs p-1 mb-1 rounded cursor-pointer`}
                         onClick={() => setSelectedPost(post)}
                       >
-                        {post.title || 'Untitled'}
+                        <div>{post.title || 'Untitled'}</div>
+                        <div className="text-[10px] mt-1">{post.formatted_date}</div>
                       </div>
                     ))}
                   </div>

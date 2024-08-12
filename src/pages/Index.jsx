@@ -480,16 +480,16 @@ const Index = () => {
         />
         <div className="flex space-x-2">
           <Button 
-            onClick={() => handleSubmit('generate')} 
+            onClick={() => handleSubmit('next_post')} 
             disabled={isLoading}
             className="bg-gradient-to-r from-[#A062F9] to-[#1A77DA] hover:from-[#8A4EE8] hover:to-[#1665C0] transition-all duration-300 shadow-md hover:shadow-lg"
           >
-            {activeButton === 'generate' && isLoading ? (
+            {activeButton === 'next_post' && isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <>
                 <Send className="mr-2 h-4 w-4" />
-                Generate
+                Next Post
               </>
             )}
           </Button>

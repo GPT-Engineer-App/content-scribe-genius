@@ -340,6 +340,32 @@ const Index = () => {
     );
   };
 
+  const handleRemovePost = async (post) => {
+    try {
+      setIsLoading(true);
+      const response = await axios.put('https://hook.eu1.make.com/7hok9kqjre31fea5p7yi9ialusmbvlkc', {
+        action: 'remove_post',
+        post_id: post.id
+      });
+      if (response.data && response.data[0].result === 'success') {
+        setCalendarData(prevData => prevData.filter(item => item.id !== post.id));
+        toast.success('Post removed successfully');
+      } else {
+        throw new Error('Failed to remove post');
+      }
+    } catch (error) {
+      console.error('Error removing post:', error);
+      toast.error('Failed to remove post. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleReschedulePost = (post) => {
+    setSelectedPost(post);
+    setDialogOpen(true);
+  };
+
   const PostDialog = () => {
     const [editedPost, setEditedPost] = useState(selectedPost);
 
@@ -352,14 +378,28 @@ const Index = () => {
       setEditedPost(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSave = () => {
-      // Here you would typically make an API call to update the post
-      console.log('Saving edited post:', editedPost);
-      setSelectedPost(null);
-      // Update the calendarData state with the edited post
-      setCalendarData(prevData => 
-        prevData.map(post => post.id === editedPost.id ? editedPost : post)
-      );
+    const handleSave = async () => {
+      try {
+        setIsLoading(true);
+        const response = await axios.put('https://hook.eu1.make.com/7hok9kqjre31fea5p7yi9ialusmbvlkc', {
+          action: 'reschedule_post',
+          post: editedPost
+        });
+        if (response.data && response.data[0].result === 'success') {
+          setCalendarData(prevData => 
+            prevData.map(post => post.id === editedPost.id ? editedPost : post)
+          );
+          setDialogOpen(false);
+          toast.success('Post rescheduled successfully');
+        } else {
+          throw new Error('Failed to reschedule post');
+        }
+      } catch (error) {
+        console.error('Error rescheduling post:', error);
+        toast.error('Failed to reschedule post. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     return (
@@ -567,14 +607,46 @@ const Index = () => {
       {showCalendar && (
         <div className="mt-8 pb-20">
           <h2 className="text-xl font-semibold mb-2">Calendar</h2>
-          <div className="bg-white p-4 rounded-md shadow-md">
-            <CalendarComponent
-              mode="single"
-              selected={scheduledDate}
-              onSelect={setScheduledDate}
-              className="rounded-md border"
-              weekStartsOn={1}
-            />
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="bg-white p-4 rounded-md shadow-md">
+              <CalendarComponent
+                mode="single"
+                selected={scheduledDate}
+                onSelect={setScheduledDate}
+                className="rounded-md border"
+                weekStartsOn={1}
+              />
+            </div>
+            <div className="mt-4 md:mt-0 bg-white p-4 rounded-md shadow-md flex-grow">
+              <h3 className="text-lg font-semibold mb-2">Scheduled Posts</h3>
+              {calendarData.length > 0 ? (
+                <ul className="space-y-2">
+                  {calendarData.map((post, index) => (
+                    <li key={index} className="flex items-center justify-between border-b pb-2">
+                      <span>{post.formatted_date}: {post.title || 'Untitled'}</span>
+                      <div>
+                        <Button
+                          onClick={() => handleReschedulePost(post)}
+                          className="mr-2 text-sm"
+                          variant="outline"
+                        >
+                          Reschedule
+                        </Button>
+                        <Button
+                          onClick={() => handleRemovePost(post)}
+                          className="text-sm"
+                          variant="destructive"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No scheduled posts.</p>
+              )}
+            </div>
           </div>
         </div>
       )}

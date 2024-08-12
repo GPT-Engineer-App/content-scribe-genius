@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
+import { Input } from "@/components/ui/input"
 import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
@@ -26,6 +27,7 @@ const Index = () => {
     controversial: '',
     inspiring: '',
   });
+  const [showCalendar, setShowCalendar] = useState(false);
   const [draft, setDraft] = useState('');
   const [image, setImage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);

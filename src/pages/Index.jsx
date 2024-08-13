@@ -392,11 +392,19 @@ const Index = () => {
 
     const postsForDay = calendarData.filter(post => post.date === selectedPost.date);
 
+    // Safely parse the date
+    const safeParseDate = (dateString) => {
+      if (typeof dateString === 'string') {
+        return parseISO(dateString);
+      }
+      return new Date(); // Return current date as fallback
+    };
+
     return (
       <Dialog open={isPostDialogOpen} onOpenChange={setIsPostDialogOpen}>
         <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Posts for {format(parseISO(selectedPost.date), 'MMMM d, yyyy')}</DialogTitle>
+            <DialogTitle>Posts for {format(safeParseDate(selectedPost.date), 'MMMM d, yyyy')}</DialogTitle>
             <DialogDescription>
               {postsForDay.length} post{postsForDay.length !== 1 ? 's' : ''} scheduled
             </DialogDescription>
@@ -606,10 +614,17 @@ const Index = () => {
                 <CalendarComponent
                   mode="multiple"
                   selected={calendarData.filter(post => post.status !== 'removed' && post.date).map(post => {
-                    try {
-                      return parseISO(post.date);
-                    } catch (error) {
-                      console.error('Error parsing date:', post.date, error);
+                    if (typeof post.date === 'string') {
+                      try {
+                        return parseISO(post.date);
+                      } catch (error) {
+                        console.error('Error parsing date:', post.date, error);
+                        return null;
+                      }
+                    } else if (post.date instanceof Date) {
+                      return post.date;
+                    } else {
+                      console.error('Invalid date format:', post.date);
                       return null;
                     }
                   }).filter(Boolean)}

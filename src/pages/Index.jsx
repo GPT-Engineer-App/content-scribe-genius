@@ -275,6 +275,32 @@ const Index = () => {
     }
   };
 
+  const handleReschedulePost = async (post) => {
+    setSelectedPost(post);
+    setDialogOpen(true);
+  };
+
+  const handleRemovePost = async (post) => {
+    try {
+      setIsLoading(true);
+      const response = await axios.put('https://hook.eu1.make.com/7hok9kqjre31fea5p7yi9ialusmbvlkc', {
+        action: 'remove_post',
+        post: post
+      });
+      if (response.data && response.data[0].result === 'success') {
+        setCalendarData(prevData => prevData.filter(item => item.id !== post.id));
+        toast.success('Post removed successfully');
+      } else {
+        throw new Error('Failed to remove post');
+      }
+    } catch (error) {
+      console.error('Error removing post:', error);
+      toast.error('Failed to remove post. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const getPostColor = (status) => {
     switch (status) {
       case 'planned':
@@ -606,26 +632,31 @@ const Index = () => {
                 <ul className="space-y-2 max-h-96 overflow-y-auto">
                   {calendarData.filter(post => post.status !== 'removed').map((post, index) => (
                     <li key={index} className="flex items-center justify-between border-b pb-2">
-                      <span>{post.formatted_date}: {post.title || 'Untitled'}</span>
-                      <div className="flex items-center">
-                        <span className={`mr-2 px-2 py-1 text-xs rounded font-bold ${
-                          post.status === 'ready' ? 'bg-[#0A66C2] text-white' :
-                          post.status === 'done' ? 'bg-green-700 text-white' :
+                      <div className="flex flex-col">
+                        <span className="font-semibold">{post.formatted_date}</span>
+                        <span>{post.title || 'Untitled'}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className={`px-2 py-1 text-xs rounded-full font-bold ${
+                          post.status === 'ready' ? 'bg-blue-500 text-white' :
+                          post.status === 'done' ? 'bg-green-500 text-white' :
                           'bg-gray-200 text-gray-800'
                         }`}>
                           {post.status}
                         </span>
                         <Button
                           onClick={() => handleReschedulePost(post)}
-                          className="mr-2 text-sm"
+                          className="text-xs"
                           variant="outline"
+                          size="sm"
                         >
                           Reschedule
                         </Button>
                         <Button
                           onClick={() => handleRemovePost(post)}
-                          className="text-sm"
+                          className="text-xs"
                           variant="destructive"
+                          size="sm"
                         >
                           Cancel
                         </Button>

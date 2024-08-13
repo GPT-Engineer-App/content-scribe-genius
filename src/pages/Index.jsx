@@ -111,6 +111,7 @@ const Index = () => {
     console.log(`Starting webhook call for action: ${action}`);
     setIsLoading(true);
     setError(null);
+    let webhookSuccess = false;
     try {
       const payload = {
         ...formData,
@@ -130,6 +131,7 @@ const Index = () => {
           'Access-Control-Allow-Origin': '*',
         },
       });
+      webhookSuccess = true;
       
       console.log("Raw webhook response:", response.data);
       
@@ -349,7 +351,10 @@ const Index = () => {
         setScheduledDate(null);
         setIsScheduleConfirmOpen(false);
         handleTabChange("calendar");
-        handleGetCalendar();
+        // Only call handleGetCalendar if the webhook was successful
+        if (webhookSuccess) {
+          handleGetCalendar();
+        }
       } else {
         throw new Error('Failed to schedule post');
       }
@@ -362,6 +367,7 @@ const Index = () => {
   };
 
   const handleRescheduleConfirm = async (newDate) => {
+    let webhookSuccess = false;
     try {
       setIsLoading(true);
       const response = await axios.put('https://hook.eu1.make.com/kn986l8l6n8lod1vxti2wfgjoxntmsya', {
@@ -380,6 +386,7 @@ const Index = () => {
         if (rescheduledPost) {
           toast.success('Post rescheduled successfully');
           console.log('Updated calendar data:', updatedPosts);
+          webhookSuccess = true;
         } else {
           throw new Error('Rescheduled post not found in the response');
         }
@@ -392,7 +399,9 @@ const Index = () => {
     } finally {
       setIsLoading(false);
       setDialogOpen(false);
-      handleGetCalendar(); // Refresh the calendar data
+      if (webhookSuccess) {
+        handleGetCalendar(); // Refresh the calendar data only if webhook was successful
+      }
     }
   };
 

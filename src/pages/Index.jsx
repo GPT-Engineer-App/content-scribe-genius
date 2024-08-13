@@ -317,6 +317,11 @@ const Index = () => {
     const monthStart = startOfMonth(today);
     const monthEnd = endOfMonth(today);
     const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  
+    const parseDate = (dateString) => {
+      const date = new Date(dateString);
+      return new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+    };
 
     return (
       <Dialog open={isCalendarDialogOpen} onOpenChange={setIsCalendarDialogOpen}>
@@ -611,14 +616,16 @@ const Index = () => {
             <div className="bg-white p-4 rounded-md shadow-md">
               <CalendarComponent
                 mode="multiple"
-                selected={calendarData.map(post => new Date(post.date))}
+                selected={calendarData.filter(post => post.status !== 'removed').map(post => parseDate(post.date))}
                 className="rounded-md border"
                 weekStartsOn={1}
                 modifiers={{
-                  scheduled: calendarData.map(post => new Date(post.date)),
+                  done: calendarData.filter(post => post.status === 'done').map(post => new Date(post.date)),
+                  ready: calendarData.filter(post => post.status === 'ready').map(post => new Date(post.date)),
                 }}
                 modifiersStyles={{
-                  scheduled: { backgroundColor: '#0A66C2', color: 'white' },
+                  done: { backgroundColor: '#10B981', color: 'white' },
+                  ready: { backgroundColor: '#3B82F6', color: 'white' },
                 }}
               />
             </div>

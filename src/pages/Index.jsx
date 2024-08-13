@@ -352,7 +352,7 @@ const Index = () => {
                 <div key={day} className="text-center font-bold">{day}</div>
               ))}
               {days.map(day => {
-                const posts = calendarData.filter(item => item.date && format(item.date, 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd'));
+                const posts = calendarData.filter(item => item.date && format(parseISO(item.date), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd'));
                 return (
                   <div
                     key={day.toString()}
@@ -640,7 +640,10 @@ const Index = () => {
                   }}
                   onDayClick={(day) => {
                     const clickedDate = format(day, 'yyyy-MM-dd');
-                    const postsForDay = calendarData.filter(post => post.date === clickedDate);
+                    const postsForDay = calendarData.filter(post => {
+                      const postDate = parseISO(post.date);
+                      return format(postDate, 'yyyy-MM-dd') === clickedDate;
+                    });
                     if (postsForDay.length > 0) {
                       setSelectedPost(postsForDay[0]);
                       setIsPostDialogOpen(true);

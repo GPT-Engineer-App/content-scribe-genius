@@ -754,33 +754,35 @@ const Index = () => {
                         {post.image_url && (
                           <img src={post.image_url} alt="Post" className="w-full h-32 object-cover rounded-md mb-2" />
                         )}
-                        <div className="flex justify-end space-x-2">
-                          <Button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedPost(post);
-                              setDialogOpen(true);
-                            }}
-                            className="text-xs"
-                            variant="outline"
-                            size="sm"
-                          >
-                            <Calendar className="mr-1 h-3 w-3" />
-                            Reschedule
-                          </Button>
-                          <Button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRemovePost(post);
-                            }}
-                            className="text-xs"
-                            variant="destructive"
-                            size="sm"
-                          >
-                            <X className="mr-1 h-3 w-3" />
-                            Remove
-                          </Button>
-                        </div>
+                        {post.status !== 'done' && (
+                          <div className="flex justify-end space-x-2">
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedPost(post);
+                                setDialogOpen(true);
+                              }}
+                              className="text-xs"
+                              variant="outline"
+                              size="sm"
+                            >
+                              <Calendar className="mr-1 h-3 w-3" />
+                              Reschedule
+                            </Button>
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRemovePost(post);
+                              }}
+                              className="text-xs"
+                              variant="destructive"
+                              size="sm"
+                            >
+                              <X className="mr-1 h-3 w-3" />
+                              Remove
+                            </Button>
+                          </div>
+                        )}
                       </li>
                     ))}
                   </ul>

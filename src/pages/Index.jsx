@@ -604,13 +604,13 @@ const Index = () => {
                 </div>
               ) : calendarData.length > 0 ? (
                 <ul className="space-y-2 max-h-96 overflow-y-auto">
-                  {calendarData.map((post, index) => (
+                  {calendarData.filter(post => post.status !== 'removed').map((post, index) => (
                     <li key={index} className="flex items-center justify-between border-b pb-2">
                       <span>{post.formatted_date}: {post.title || 'Untitled'}</span>
                       <div className="flex items-center">
-                        <span className={`mr-2 px-2 py-1 text-xs rounded ${
-                          post.status === 'ready' ? 'bg-green-200 text-green-800' :
-                          post.status === 'removed' ? 'bg-red-200 text-red-800' :
+                        <span className={`mr-2 px-2 py-1 text-xs rounded font-bold ${
+                          post.status === 'ready' ? 'bg-[#0A66C2] text-white' :
+                          post.status === 'done' ? 'bg-green-700 text-white' :
                           'bg-gray-200 text-gray-800'
                         }`}>
                           {post.status}

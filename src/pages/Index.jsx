@@ -323,13 +323,18 @@ const Index = () => {
         date: selectedPost.date instanceof Date ? format(selectedPost.date, 'yyyy-MM-dd') : selectedPost.date,
         new_date: format(newDate, 'yyyy-MM-dd')
       });
-      if (response.data && response.data.result === 'success') {
-        setCalendarData(prevData => prevData.map(item => 
-          item.id === selectedPost.id ? {...item, date: newDate} : item
-        ));
-        toast.success('Post rescheduled successfully');
+      if (response.data && Array.isArray(response.data)) {
+        const updatedPosts = response.data;
+        setCalendarData(updatedPosts);
+        const rescheduledPost = updatedPosts.find(post => post.date === format(newDate, 'yyyy-MM-dd'));
+        if (rescheduledPost) {
+          toast.success('Post rescheduled successfully');
+          console.log('Updated calendar data:', updatedPosts);
+        } else {
+          throw new Error('Rescheduled post not found in the response');
+        }
       } else {
-        throw new Error('Failed to reschedule post');
+        throw new Error('Unexpected response format');
       }
     } catch (error) {
       console.error('Error rescheduling post:', error);
@@ -485,6 +490,7 @@ const Index = () => {
   };
 
   const RescheduleDialog = () => {
+    const [newDate, setNewDate] = useState(null);
     const safeParseDate = (dateString) => {
       if (typeof dateString === 'string') {
         return parseISO(dateString);
@@ -505,16 +511,19 @@ const Index = () => {
           </DialogHeader>
           <CalendarComponent
             mode="single"
-            selected={selectedPost ? safeParseDate(selectedPost.date) : undefined}
-            onSelect={(date) => {
-              if (date) {
-                handleRescheduleConfirm(date);
-              }
-            }}
+            selected={newDate || (selectedPost ? safeParseDate(selectedPost.date) : undefined)}
+            onSelect={setNewDate}
             initialFocus
           />
           <DialogFooter>
             <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button onClick={() => {
+              if (newDate) {
+                handleRescheduleConfirm(newDate);
+              }
+            }} disabled={!newDate}>
+              Confirm
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

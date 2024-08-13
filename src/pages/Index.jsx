@@ -793,41 +793,39 @@ const Index = () => {
                             {post.status}
                           </span>
                         </div>
+                        <p className="text-sm text-gray-700 mb-2 line-clamp-2">{post.summary || 'No summary available'}</p>
+                        {post.image_url && (
+                          <img src={post.image_url} alt="Post" className="w-full h-32 object-cover rounded-md mb-2" />
+                        )}
                         {post.status !== 'done' && (
-                          <>
-                            <p className="text-sm text-gray-700 mb-2 line-clamp-2">{post.summary || 'No summary available'}</p>
-                            {post.image_url && (
-                              <img src={post.image_url} alt="Post" className="w-full h-32 object-cover rounded-md mb-2" />
-                            )}
-                            <div className="flex justify-end space-x-2">
-                              <Button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedPost(post);
-                                  setDialogOpen(true);
-                                }}
-                                className="text-xs"
-                                variant="outline"
-                                size="sm"
-                              >
-                                <Calendar className="mr-1 h-3 w-3" />
-                                Reschedule
-                              </Button>
-                              <Button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  handleRemovePost(post);
-                                }}
-                                className="text-xs"
-                                variant="destructive"
-                                size="sm"
-                              >
-                                <X className="mr-1 h-3 w-3" />
-                                Remove
-                              </Button>
-                            </div>
-                          </>
+                          <div className="flex justify-end space-x-2">
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedPost(post);
+                                setDialogOpen(true);
+                              }}
+                              className="text-xs"
+                              variant="outline"
+                              size="sm"
+                            >
+                              <Calendar className="mr-1 h-3 w-3" />
+                              Reschedule
+                            </Button>
+                            <Button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleRemovePost(post);
+                              }}
+                              className="text-xs"
+                              variant="destructive"
+                              size="sm"
+                            >
+                              <X className="mr-1 h-3 w-3" />
+                              Remove
+                            </Button>
+                          </div>
                         )}
                       </li>
                     ))}

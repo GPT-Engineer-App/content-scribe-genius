@@ -308,7 +308,7 @@ const Index = () => {
         date: formattedDate
       });
 
-      if (response.data && response.data.result === 'success') {
+      if (response.status === 200 && response.data && response.data.result === 'success') {
         toast.success('Post removed successfully');
         await handleGetCalendar(); // Refresh the calendar data
       } else {

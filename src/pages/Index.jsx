@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
-import { Loader2, Copy, RefreshCw, Send, Image, Upload, Repeat, Calendar, X } from "lucide-react"
+import { Loader2, Copy, RefreshCw, Send, Image, Upload, Repeat, Calendar, X, Sparkles } from "lucide-react"
 import JSON5 from 'json5';
 import {
   Dialog,
@@ -488,6 +488,7 @@ const Index = () => {
             value="generator"
             className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-400 data-[state=active]:to-yellow-300 data-[state=active]:text-white hover:bg-orange-100 transition-all duration-200"
           >
+            <Sparkles className="w-4 h-4 mr-2" />
             Generator
           </TabsTrigger>
           <TabsTrigger 
@@ -495,6 +496,7 @@ const Index = () => {
             onClick={handleGetCalendar}
             className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-400 data-[state=active]:to-yellow-300 data-[state=active]:text-white hover:bg-orange-100 transition-all duration-200"
           >
+            <Calendar className="w-4 h-4 mr-2" />
             Calendar
           </TabsTrigger>
         </TabsList>

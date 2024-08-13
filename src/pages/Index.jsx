@@ -246,14 +246,13 @@ const Index = () => {
       const response = await axios.get('https://hook.eu1.make.com/kn986l8l6n8lod1vxti2wfgjoxntmsya?action=get_2weeks');
       const data = response.data;
       setCalendarResponse(JSON.stringify(data, null, 2)); // Store the raw response
-      setShowStickyLog(true);
       if (Array.isArray(data) && data.length > 0) {
         let calendarList = data.flatMap(item => {
-          if (item.calendar_list && typeof item.calendar_list === 'object') {
+          if (item && typeof item === 'object') {
             return [{
-              ...item.calendar_list,
-              date: item.calendar_list.date ? parseISO(item.calendar_list.date) : null,
-              formatted_date: item.calendar_list.date ? format(parseISO(item.calendar_list.date), 'MMM dd, yyyy') : 'No date'
+              ...item,
+              date: item.date ? parseISO(item.date) : null,
+              formatted_date: item.date ? format(parseISO(item.date), 'MMM dd, yyyy') : 'No date'
             }];
           }
           return [];
@@ -271,7 +270,6 @@ const Index = () => {
       console.error('Error fetching calendar data:', error);
       toast.error('Failed to fetch calendar data. Please try again.');
       setCalendarResponse(JSON.stringify(error, null, 2)); // Store the error response
-      setShowStickyLog(true);
       setCalendarData([]);
     } finally {
       setIsLoading(false);

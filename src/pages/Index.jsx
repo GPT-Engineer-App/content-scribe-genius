@@ -484,8 +484,19 @@ const Index = () => {
       <h1 className="text-2xl font-bold mb-4 text-center sm:text-left">Content Generation App</h1>
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-2 sticky top-0 z-10 bg-white">
-          <TabsTrigger value="generator">Generator</TabsTrigger>
-          <TabsTrigger value="calendar" onClick={handleGetCalendar}>Calendar</TabsTrigger>
+          <TabsTrigger 
+            value="generator"
+            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-400 data-[state=active]:to-yellow-300 data-[state=active]:text-white hover:bg-orange-100 transition-all duration-200"
+          >
+            Generator
+          </TabsTrigger>
+          <TabsTrigger 
+            value="calendar" 
+            onClick={handleGetCalendar}
+            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-400 data-[state=active]:to-yellow-300 data-[state=active]:text-white hover:bg-orange-100 transition-all duration-200"
+          >
+            Calendar
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="generator">
           <div className="space-y-4">

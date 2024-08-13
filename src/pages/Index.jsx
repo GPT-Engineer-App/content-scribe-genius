@@ -244,12 +244,17 @@ const Index = () => {
       const data = response.data;
       setCalendarResponse(JSON.stringify(data, null, 2)); // Store the raw response
       setShowStickyLog(true);
-      if (Array.isArray(data) && data.length > 0 && data[0].calendar_list) {
-        let calendarList = data[0].calendar_list.map(post => ({
-          ...post,
-          date: post.date ? parseISO(post.date) : null,
-          formatted_date: post.date ? format(parseISO(post.date), 'MMM dd, yyyy') : 'No date'
-        }));
+      if (Array.isArray(data) && data.length > 0) {
+        let calendarList = data.flatMap(item => {
+          if (item.calendar_list && typeof item.calendar_list === 'object') {
+            return [{
+              ...item.calendar_list,
+              date: item.calendar_list.date ? parseISO(item.calendar_list.date) : null,
+              formatted_date: item.calendar_list.date ? format(parseISO(item.calendar_list.date), 'MMM dd, yyyy') : 'No date'
+            }];
+          }
+          return [];
+        });
         // Sort the calendar data by date
         calendarList.sort((a, b) => (a.date && b.date) ? a.date - b.date : 0);
         setCalendarData(calendarList);
@@ -597,7 +602,14 @@ const Index = () => {
                   {calendarData.map((post, index) => (
                     <li key={index} className="flex items-center justify-between border-b pb-2">
                       <span>{post.formatted_date}: {post.title || 'Untitled'}</span>
-                      <div>
+                      <div className="flex items-center">
+                        <span className={`mr-2 px-2 py-1 text-xs rounded ${
+                          post.status === 'ready' ? 'bg-green-200 text-green-800' :
+                          post.status === 'removed' ? 'bg-red-200 text-red-800' :
+                          'bg-gray-200 text-gray-800'
+                        }`}>
+                          {post.status}
+                        </span>
                         <Button
                           onClick={() => handleReschedulePost(post)}
                           className="mr-2 text-sm"

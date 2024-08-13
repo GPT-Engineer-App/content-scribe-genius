@@ -1,9 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
-import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
@@ -46,9 +45,9 @@ const Index = () => {
   const [isCalendarDialogOpen, setIsCalendarDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("generator");
   const [calendarResponse, setCalendarResponse] = useState(null);
-  const [showStickyLog, setShowStickyLog] = useState(false);
+  const [showStickyMenu, setShowStickyMenu] = useState(false);
 
-  const stickyLogRef = useRef(null);
+  const stickyMenuRef = useRef(null);
 
   useEffect(() => {
     const savedContent = sessionStorage.getItem('generatedContent');
@@ -182,6 +181,9 @@ const Index = () => {
         // Store the generated content in sessionStorage
         sessionStorage.setItem('generatedContent', JSON.stringify({ result_text: sanitizedText, is_news, result_image }));
         console.log('Content stored in sessionStorage');
+
+        // Show sticky menu when new content is generated
+        setShowStickyMenu(true);
       } else {
         throw new Error('Unexpected response from server');
       }
@@ -468,10 +470,19 @@ const Index = () => {
     );
   };
 
+  const handleTabChange = useCallback((value) => {
+    setActiveTab(value);
+    if (value !== 'generator') {
+      setShowStickyMenu(false);
+    } else if (draft || (data && data.result_text)) {
+      setShowStickyMenu(true);
+    }
+  }, [draft, data]);
+
   return (
     <div className="container mx-auto p-4 pb-40 min-h-screen overflow-y-auto">
       <h1 className="text-2xl font-bold mb-4 text-center sm:text-left">Content Generation App</h1>
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-2 sticky top-0 z-10 bg-white">
           <TabsTrigger value="generator">Generator</TabsTrigger>
           <TabsTrigger value="calendar" onClick={handleGetCalendar}>Calendar</TabsTrigger>
@@ -695,7 +706,7 @@ const Index = () => {
           </div>
         </TabsContent>
       </Tabs>
-      {draft && (
+      {showStickyMenu && activeTab === 'generator' && (
         <div className="fixed bottom-0 left-0 right-0 bg-white bg-opacity-60 backdrop-blur-sm p-4 shadow-md">
           <div className="container mx-auto flex flex-wrap justify-center gap-2 mb-2">
             <div className="w-full sm:w-auto">

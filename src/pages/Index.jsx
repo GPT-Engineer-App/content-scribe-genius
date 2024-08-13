@@ -293,32 +293,27 @@ const Index = () => {
   const handleRemovePost = async (post) => {
     try {
       setIsLoading(true);
-      const formattedDate = post.date instanceof Date
-        ? format(post.date, 'yyyy-MM-dd')
-        : typeof post.date === 'string'
-          ? format(parseISO(post.date), 'yyyy-MM-dd')
-          : null;
-
-      if (!formattedDate) {
-        throw new Error('Invalid date format');
-      }
-
       const response = await axios.put('https://hook.eu1.make.com/kn986l8l6n8lod1vxti2wfgjoxntmsya', {
         action: 'remove',
-        date: formattedDate
+        date: post.date instanceof Date ? format(post.date, 'yyyy-MM-dd') : post.date
       });
-
-      if (response.data && response.data.result === 'success') {
+      if (response.data && Array.isArray(response.data)) {
+        const updatedPosts = response.data.map(post => ({
+          ...post,
+          date: parseISO(post.date),
+          formatted_date: format(parseISO(post.date), 'MMM dd, yyyy')
+        }));
+        setCalendarData(updatedPosts);
         toast.success('Post removed successfully');
-        await handleGetCalendar(); // Refresh the calendar data
       } else {
         throw new Error('Unexpected response format');
       }
     } catch (error) {
       console.error('Error removing post:', error);
-      toast.error(`Failed to remove post: ${error.message}`);
+      toast.error('Failed to remove post. Please try again.');
     } finally {
       setIsLoading(false);
+      handleGetCalendar(); // Refresh the calendar data
     }
   };
 

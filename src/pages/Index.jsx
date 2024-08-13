@@ -793,9 +793,13 @@ const Index = () => {
                             {post.status}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-700 mb-2 line-clamp-2">{post.summary || 'No summary available'}</p>
-                        {post.image_url && (
-                          <img src={post.image_url} alt="Post" className="w-full h-32 object-cover rounded-md mb-2" />
+                        {post.status === 'ready' && (
+                          <>
+                            <p className="text-sm text-gray-700 mb-2 line-clamp-2">{post.summary || 'No summary available'}</p>
+                            {post.image_url && (
+                              <img src={post.image_url} alt="Post" className="w-full h-32 object-cover rounded-md mb-2" />
+                            )}
+                          </>
                         )}
                         {post.status !== 'done' && (
                           <div className="flex justify-end space-x-2">

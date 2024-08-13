@@ -22,7 +22,7 @@ import {
 import { toast } from "sonner"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, parse, isValid } from "date-fns"
+import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, parse, isValid, addDays } from "date-fns"
 
 const Index = () => {
   const [formData, setFormData] = useState({
@@ -42,6 +42,7 @@ const Index = () => {
   const [dialogContent, setDialogContent] = useState(null);
   const [activeButton, setActiveButton] = useState(null);
   const [scheduledDate, setScheduledDate] = useState(null);
+  const [isScheduleConfirmOpen, setIsScheduleConfirmOpen] = useState(false);
   const [calendarData, setCalendarData] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
   const [isCalendarDialogOpen, setIsCalendarDialogOpen] = useState(false);
@@ -313,6 +314,33 @@ const Index = () => {
   const handleReschedulePost = async (post) => {
     setSelectedPost(post);
     setDialogOpen(true);
+  };
+
+  const handleScheduleConfirm = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.put('https://hook.eu1.make.com/kn986l8l6n8lod1vxti2wfgjoxntmsya', {
+        action: 'add_item',
+        date: format(scheduledDate, 'yyyy-MM-dd'),
+        content: draft || (data && data.result_text) || '',
+        image_url: image || '',
+        title: 'Scheduled Post', // You might want to generate a title or let the user input one
+      });
+      if (response.data && response.data.result === 'success') {
+        toast.success('Post scheduled successfully');
+        setScheduledDate(null);
+        setIsScheduleConfirmOpen(false);
+        handleTabChange("calendar");
+        handleGetCalendar();
+      } else {
+        throw new Error('Failed to schedule post');
+      }
+    } catch (error) {
+      console.error('Error scheduling post:', error);
+      toast.error('Failed to schedule post. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleRescheduleConfirm = async (newDate) => {
@@ -803,6 +831,22 @@ const Index = () => {
         </TabsContent>
       </Tabs>
       <PostDialog />
+      <Dialog open={isScheduleConfirmOpen} onOpenChange={setIsScheduleConfirmOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Confirm Scheduling</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to schedule this post for {scheduledDate ? format(scheduledDate, 'PPP') : 'the selected date'}?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setIsScheduleConfirmOpen(false)}>Cancel</Button>
+            <Button onClick={handleScheduleConfirm} disabled={isLoading}>
+              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirm"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {newPostGenerated && activeTab === "generator" && (
         <div className="fixed bottom-0 left-0 right-0 bg-white bg-opacity-60 backdrop-blur-sm p-4 shadow-md">
           <div className="container mx-auto flex flex-wrap justify-center gap-2 mb-2">
@@ -894,9 +938,11 @@ const Index = () => {
                         setScheduledDate(null);
                       } else {
                         setScheduledDate(date);
+                        setIsScheduleConfirmOpen(true);
                       }
                     }}
                     initialFocus
+                    disabled={(date) => date < addDays(new Date(), -1)}
                   />
                 </PopoverContent>
               </Popover>

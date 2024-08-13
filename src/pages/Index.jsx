@@ -281,10 +281,22 @@ const Index = () => {
       }
     } catch (error) {
       console.error('Error fetching calendar data:', error);
-      toast.error('Failed to fetch calendar data. Please try again.');
-      setCalendarResponse(JSON.stringify(error, null, 2)); // Store the error response
-      setShowStickyLog(true);
-      setCalendarData([]);
+      // Check if the error response contains valid calendar data
+      if (error.response && Array.isArray(error.response.data) && error.response.data.length > 0) {
+        const calendarList = error.response.data.map(item => ({
+          ...item,
+          date: item.date ? parseISO(item.date) : null,
+          formatted_date: item.date ? format(parseISO(item.date), 'MMM dd, yyyy') : 'No date'
+        }));
+        calendarList.sort((a, b) => (a.date && b.date) ? a.date - b.date : 0);
+        setCalendarData(calendarList);
+        console.log('Calendar data set from error response:', calendarList);
+      } else {
+        toast.error('Failed to fetch calendar data. Please try again.');
+        setCalendarResponse(JSON.stringify(error, null, 2)); // Store the error response
+        setShowStickyLog(true);
+        setCalendarData([]);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -293,32 +305,27 @@ const Index = () => {
   const handleRemovePost = async (post) => {
     try {
       setIsLoading(true);
-      const formattedDate = post.date instanceof Date
-        ? format(post.date, 'yyyy-MM-dd')
-        : typeof post.date === 'string'
-          ? format(parseISO(post.date), 'yyyy-MM-dd')
-          : null;
-
-      if (!formattedDate) {
-        throw new Error('Invalid date format');
-      }
-
       const response = await axios.put('https://hook.eu1.make.com/kn986l8l6n8lod1vxti2wfgjoxntmsya', {
         action: 'remove',
-        date: formattedDate
+        date: post.date instanceof Date ? format(post.date, 'yyyy-MM-dd') : post.date
       });
-
-      if (response.status === 200 && response.data && response.data.result === 'success') {
+      if (response.data && Array.isArray(response.data)) {
+        const updatedPosts = response.data.map(post => ({
+          ...post,
+          date: parseISO(post.date),
+          formatted_date: format(parseISO(post.date), 'MMM dd, yyyy')
+        }));
+        setCalendarData(updatedPosts);
         toast.success('Post removed successfully');
-        await handleGetCalendar(); // Refresh the calendar data
       } else {
         throw new Error('Unexpected response format');
       }
     } catch (error) {
       console.error('Error removing post:', error);
-      toast.error(`Failed to remove post: ${error.message}`);
+      toast.error('Failed to remove post. Please try again.');
     } finally {
       setIsLoading(false);
+      handleGetCalendar(); // Refresh the calendar data
     }
   };
 

@@ -297,11 +297,11 @@ const Index = () => {
   const handleRemovePost = async (post) => {
     try {
       setIsLoading(true);
-      const response = await axios.put('https://hook.eu1.make.com/7hok9kqjre31fea5p7yi9ialusmbvlkc', {
-        action: 'remove_post',
-        post: post
+      const response = await axios.put('https://hook.eu1.make.com/kn986l8l6n8lod1vxti2wfgjoxntmsya', {
+        action: 'remove',
+        date: post.date
       });
-      if (response.data && response.data[0].result === 'success') {
+      if (response.data && response.data.result === 'success') {
         setCalendarData(prevData => prevData.filter(item => item.id !== post.id));
         toast.success('Post removed successfully');
       } else {
@@ -312,6 +312,36 @@ const Index = () => {
       toast.error('Failed to remove post. Please try again.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleReschedulePost = async (post) => {
+    setSelectedPost(post);
+    setDialogOpen(true);
+  };
+
+  const handleRescheduleConfirm = async (newDate) => {
+    try {
+      setIsLoading(true);
+      const response = await axios.put('https://hook.eu1.make.com/kn986l8l6n8lod1vxti2wfgjoxntmsya', {
+        action: 'reschedule',
+        date: selectedPost.date,
+        new_date: format(newDate, 'yyyy-MM-dd')
+      });
+      if (response.data && response.data.result === 'success') {
+        setCalendarData(prevData => prevData.map(item => 
+          item.id === selectedPost.id ? {...item, date: newDate} : item
+        ));
+        toast.success('Post rescheduled successfully');
+      } else {
+        throw new Error('Failed to reschedule post');
+      }
+    } catch (error) {
+      console.error('Error rescheduling post:', error);
+      toast.error('Failed to reschedule post. Please try again.');
+    } finally {
+      setIsLoading(false);
+      setDialogOpen(false);
     }
   };
 
@@ -459,9 +489,36 @@ const Index = () => {
     );
   };
 
+  const RescheduleDialog = () => (
+    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Reschedule Post</DialogTitle>
+          <DialogDescription>
+            Choose a new date for this post.
+          </DialogDescription>
+        </DialogHeader>
+        <CalendarComponent
+          mode="single"
+          selected={selectedPost ? parseISO(selectedPost.date) : undefined}
+          onSelect={(date) => {
+            if (date) {
+              handleRescheduleConfirm(date);
+            }
+          }}
+          initialFocus
+        />
+        <DialogFooter>
+          <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+
   return (
     <div className="container mx-auto p-4 pb-40 min-h-screen overflow-y-auto">
       <h1 className="text-2xl font-bold mb-4 text-center sm:text-left">Content Generation App</h1>
+      <RescheduleDialog />
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-2 sticky top-0 z-10 bg-white">
           <TabsTrigger 
@@ -686,7 +743,8 @@ const Index = () => {
                           <Button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleReschedulePost(post);
+                              setSelectedPost(post);
+                              setDialogOpen(true);
                             }}
                             className="text-xs"
                             variant="outline"

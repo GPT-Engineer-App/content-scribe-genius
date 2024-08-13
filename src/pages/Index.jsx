@@ -289,11 +289,6 @@ const Index = () => {
     }
   };
 
-  const handleReschedulePost = async (post) => {
-    setSelectedPost(post);
-    setDialogOpen(true);
-  };
-
   const handleRemovePost = async (post) => {
     try {
       setIsLoading(true);

@@ -297,11 +297,11 @@ const Index = () => {
         action: 'remove',
         date: post.date
       });
-      if (response.data && response.data.result === 'success') {
-        setCalendarData(prevData => prevData.filter(item => item.id !== post.id));
+      if (response.data && Array.isArray(response.data)) {
+        setCalendarData(response.data);
         toast.success('Post removed successfully');
       } else {
-        throw new Error('Failed to remove post');
+        throw new Error('Unexpected response format');
       }
     } catch (error) {
       console.error('Error removing post:', error);
@@ -799,6 +799,7 @@ const Index = () => {
                             </Button>
                             <Button
                               onClick={(e) => {
+                                e.preventDefault();
                                 e.stopPropagation();
                                 handleRemovePost(post);
                               }}

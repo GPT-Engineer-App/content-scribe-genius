@@ -305,15 +305,28 @@ const Index = () => {
         }));
         setCalendarData(updatedPosts);
         toast.success('Post removed successfully');
+      } else if (response.data && response.data.result === 'success') {
+        // Handle case where successful removal doesn't return updated posts
+        toast.success('Post removed successfully');
+        await handleGetCalendar(); // Refresh the calendar data
       } else {
         throw new Error('Unexpected response format');
       }
     } catch (error) {
       console.error('Error removing post:', error);
-      toast.error('Failed to remove post. Please try again.');
+      if (error.response) {
+        console.error('Response data:', error.response.data);
+        console.error('Response status:', error.response.status);
+        toast.error(`Failed to remove post: ${error.response.data.message || error.response.statusText}`);
+      } else if (error.request) {
+        console.error('No response received:', error.request);
+        toast.error('Failed to remove post: No response received from server');
+      } else {
+        console.error('Error details:', error.message);
+        toast.error(`Failed to remove post: ${error.message}`);
+      }
     } finally {
       setIsLoading(false);
-      handleGetCalendar(); // Refresh the calendar data
     }
   };
 

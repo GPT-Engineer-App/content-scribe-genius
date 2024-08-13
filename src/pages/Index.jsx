@@ -20,7 +20,7 @@ import {
 import { toast } from "sonner"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns"
+import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, parse } from "date-fns"
 
 const Index = () => {
   const [formData, setFormData] = useState({
@@ -319,8 +319,7 @@ const Index = () => {
     const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
   
     const parseDate = (dateString) => {
-      const date = new Date(dateString);
-      return new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+      return parse(dateString, 'yyyy-MM-dd', new Date());
     };
 
     return (
@@ -616,7 +615,7 @@ const Index = () => {
             <div className="bg-white p-4 rounded-md shadow-md">
               <CalendarComponent
                 mode="multiple"
-                selected={calendarData.filter(post => post.status !== 'removed').map(post => parseDate(post.date))}
+                selected={calendarData.filter(post => post.status !== 'removed').map(post => parseISO(post.date))}
                 className="rounded-md border"
                 weekStartsOn={1}
                 modifiers={{

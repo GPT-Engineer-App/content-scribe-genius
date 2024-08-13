@@ -22,7 +22,7 @@ import {
 import { toast } from "sonner"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, parse } from "date-fns"
+import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, parse, isValid } from "date-fns"
 
 const Index = () => {
   const [formData, setFormData] = useState({
@@ -641,8 +641,9 @@ const Index = () => {
                   onDayClick={(day) => {
                     const clickedDate = format(day, 'yyyy-MM-dd');
                     const postsForDay = calendarData.filter(post => {
-                      const postDate = parseISO(post.date);
-                      return format(postDate, 'yyyy-MM-dd') === clickedDate;
+                      if (!post.date) return false;
+                      const postDate = post.date instanceof Date ? post.date : parseISO(post.date);
+                      return isValid(postDate) && format(postDate, 'yyyy-MM-dd') === clickedDate;
                     });
                     if (postsForDay.length > 0) {
                       setSelectedPost(postsForDay[0]);

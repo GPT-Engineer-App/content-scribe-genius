@@ -295,10 +295,15 @@ const Index = () => {
       setIsLoading(true);
       const response = await axios.put('https://hook.eu1.make.com/kn986l8l6n8lod1vxti2wfgjoxntmsya', {
         action: 'remove',
-        date: post.date
+        date: post.date instanceof Date ? format(post.date, 'yyyy-MM-dd') : post.date
       });
       if (response.data && Array.isArray(response.data)) {
-        setCalendarData(response.data);
+        const updatedPosts = response.data.map(post => ({
+          ...post,
+          date: parseISO(post.date),
+          formatted_date: format(parseISO(post.date), 'MMM dd, yyyy')
+        }));
+        setCalendarData(updatedPosts);
         toast.success('Post removed successfully');
       } else {
         throw new Error('Unexpected response format');
@@ -308,6 +313,7 @@ const Index = () => {
       toast.error('Failed to remove post. Please try again.');
     } finally {
       setIsLoading(false);
+      handleGetCalendar(); // Refresh the calendar data
     }
   };
 
@@ -352,9 +358,13 @@ const Index = () => {
         new_date: format(newDate, 'yyyy-MM-dd')
       });
       if (response.data && Array.isArray(response.data)) {
-        const updatedPosts = response.data;
+        const updatedPosts = response.data.map(post => ({
+          ...post,
+          date: parseISO(post.date),
+          formatted_date: format(parseISO(post.date), 'MMM dd, yyyy')
+        }));
         setCalendarData(updatedPosts);
-        const rescheduledPost = updatedPosts.find(post => post.date === format(newDate, 'yyyy-MM-dd'));
+        const rescheduledPost = updatedPosts.find(post => format(post.date, 'yyyy-MM-dd') === format(newDate, 'yyyy-MM-dd'));
         if (rescheduledPost) {
           toast.success('Post rescheduled successfully');
           console.log('Updated calendar data:', updatedPosts);
@@ -370,6 +380,7 @@ const Index = () => {
     } finally {
       setIsLoading(false);
       setDialogOpen(false);
+      handleGetCalendar(); // Refresh the calendar data
     }
   };
 

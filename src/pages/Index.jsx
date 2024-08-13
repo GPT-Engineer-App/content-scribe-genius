@@ -390,53 +390,59 @@ const Index = () => {
   const PostDialog = () => {
     if (!selectedPost) return null;
 
+    const postsForDay = calendarData.filter(post => post.date === selectedPost.date);
+
     return (
       <Dialog open={isPostDialogOpen} onOpenChange={setIsPostDialogOpen}>
         <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{selectedPost.title || 'Untitled Post'}</DialogTitle>
+            <DialogTitle>Posts for {format(parseISO(selectedPost.date), 'MMMM d, yyyy')}</DialogTitle>
             <DialogDescription>
-              {selectedPost.formatted_date} - Status: {selectedPost.status}
+              {postsForDay.length} post{postsForDay.length !== 1 ? 's' : ''} scheduled
             </DialogDescription>
           </DialogHeader>
-          <div className="mt-4">
-            {selectedPost.image_url && (
-              <img src={selectedPost.image_url} alt="Post" className="w-full h-auto object-cover rounded-md mb-4" />
-            )}
-            <div className="prose max-w-none">
-              <ReactMarkdown
-                components={{
-                  p: ({ children }) => <p className="mb-4">{children}</p>,
-                  h1: ({ children }) => <h1 className="text-2xl font-bold mb-2">{children}</h1>,
-                  h2: ({ children }) => <h2 className="text-xl font-semibold mb-2">{children}</h2>,
-                  h3: ({ children }) => <h3 className="text-lg font-medium mb-2">{children}</h3>,
-                  ul: ({ children }) => <ul className="list-disc pl-5 mb-4">{children}</ul>,
-                  ol: ({ children }) => <ol className="list-decimal pl-5 mb-4">{children}</ol>,
-                  li: ({ children }) => <li className="mb-1">{children}</li>,
-                  blockquote: ({ children }) => <blockquote className="border-l-4 border-gray-300 pl-4 italic my-4">{children}</blockquote>,
-                  code: ({ node, inline, className, children, ...props }) => {
-                    const match = /language-(\w+)/.exec(className || '')
-                    return !inline && match ? (
-                      <SyntaxHighlighter
-                        style={vscDarkPlus}
-                        language={match[1]}
-                        PreTag="div"
-                        {...props}
-                      >
-                        {String(children).replace(/\n$/, '')}
-                      </SyntaxHighlighter>
-                    ) : (
-                      <code className={className} {...props}>
-                        {children}
-                      </code>
-                    )
-                  },
-                }}
-              >
-                {selectedPost.content || 'No content available'}
-              </ReactMarkdown>
+          {postsForDay.map((post, index) => (
+            <div key={index} className="mt-4 border-t pt-4">
+              <h3 className="text-lg font-semibold mb-2">{post.title || 'Untitled Post'}</h3>
+              <p className="text-sm text-gray-500 mb-2">Status: {post.status}</p>
+              {post.image_url && (
+                <img src={post.image_url} alt="Post" className="w-full h-auto object-cover rounded-md mb-4" />
+              )}
+              <div className="prose max-w-none">
+                <ReactMarkdown
+                  components={{
+                    p: ({ children }) => <p className="mb-4">{children}</p>,
+                    h1: ({ children }) => <h1 className="text-2xl font-bold mb-2">{children}</h1>,
+                    h2: ({ children }) => <h2 className="text-xl font-semibold mb-2">{children}</h2>,
+                    h3: ({ children }) => <h3 className="text-lg font-medium mb-2">{children}</h3>,
+                    ul: ({ children }) => <ul className="list-disc pl-5 mb-4">{children}</ul>,
+                    ol: ({ children }) => <ol className="list-decimal pl-5 mb-4">{children}</ol>,
+                    li: ({ children }) => <li className="mb-1">{children}</li>,
+                    blockquote: ({ children }) => <blockquote className="border-l-4 border-gray-300 pl-4 italic my-4">{children}</blockquote>,
+                    code: ({ node, inline, className, children, ...props }) => {
+                      const match = /language-(\w+)/.exec(className || '')
+                      return !inline && match ? (
+                        <SyntaxHighlighter
+                          style={vscDarkPlus}
+                          language={match[1]}
+                          PreTag="div"
+                          {...props}
+                        >
+                          {String(children).replace(/\n$/, '')}
+                        </SyntaxHighlighter>
+                      ) : (
+                        <code className={className} {...props}>
+                          {children}
+                        </code>
+                      )
+                    },
+                  }}
+                >
+                  {post.content || 'No content available'}
+                </ReactMarkdown>
+              </div>
             </div>
-          </div>
+          ))}
           <DialogFooter>
             <Button onClick={() => setIsPostDialogOpen(false)}>Close</Button>
           </DialogFooter>
@@ -616,6 +622,14 @@ const Index = () => {
                   modifiersStyles={{
                     done: { backgroundColor: '#10B981', color: 'white' },
                     ready: { backgroundColor: '#3B82F6', color: 'white' },
+                  }}
+                  onDayClick={(day) => {
+                    const clickedDate = format(day, 'yyyy-MM-dd');
+                    const postsForDay = calendarData.filter(post => post.date === clickedDate);
+                    if (postsForDay.length > 0) {
+                      setSelectedPost(postsForDay[0]);
+                      setIsPostDialogOpen(true);
+                    }
                   }}
                 />
               </div>

@@ -615,12 +615,19 @@ const Index = () => {
             <div className="bg-white p-4 rounded-md shadow-md">
               <CalendarComponent
                 mode="multiple"
-                selected={calendarData.filter(post => post.status !== 'removed').map(post => parseISO(post.date))}
+                selected={calendarData.filter(post => post.status !== 'removed' && post.date).map(post => {
+                  try {
+                    return parseISO(post.date);
+                  } catch (error) {
+                    console.error('Error parsing date:', post.date, error);
+                    return null;
+                  }
+                }).filter(Boolean)}
                 className="rounded-md border"
                 weekStartsOn={1}
                 modifiers={{
-                  done: calendarData.filter(post => post.status === 'done').map(post => new Date(post.date)),
-                  ready: calendarData.filter(post => post.status === 'ready').map(post => new Date(post.date)),
+                  done: calendarData.filter(post => post.status === 'done' && post.date).map(post => new Date(post.date)),
+                  ready: calendarData.filter(post => post.status === 'ready' && post.date).map(post => new Date(post.date)),
                 }}
                 modifiersStyles={{
                   done: { backgroundColor: '#10B981', color: 'white' },

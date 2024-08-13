@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { Trash2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -84,6 +85,21 @@ const Index = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prevData => ({ ...prevData, [name]: value }));
+  };
+
+  const handleReset = () => {
+    setFormData({
+      news: '',
+      personal: '',
+      controversial: '',
+      inspiring: '',
+    });
+    setDraft('');
+    setImage(null);
+    setFileName('');
+    setImageUploaded(false);
+    setData(null);
+    sessionStorage.removeItem('generatedContent');
   };
 
   const handleImageUpload = async (e) => {
@@ -653,6 +669,15 @@ const Index = () => {
                     Generate
                   </>
                 )}
+              </Button>
+              <Button
+                onClick={handleReset}
+                disabled={isLoading}
+                variant="outline"
+                className="border-red-500 text-red-500 hover:bg-red-50"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Reset
               </Button>
             </div>
           </div>

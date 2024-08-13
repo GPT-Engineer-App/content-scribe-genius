@@ -293,20 +293,22 @@ const Index = () => {
   const handleRemovePost = async (post) => {
     try {
       setIsLoading(true);
+      const formattedDate = post.date instanceof Date
+        ? format(post.date, 'yyyy-MM-dd')
+        : typeof post.date === 'string'
+          ? format(parseISO(post.date), 'yyyy-MM-dd')
+          : null;
+
+      if (!formattedDate) {
+        throw new Error('Invalid date format');
+      }
+
       const response = await axios.put('https://hook.eu1.make.com/kn986l8l6n8lod1vxti2wfgjoxntmsya', {
         action: 'remove',
-        date: post.date instanceof Date ? format(post.date, 'yyyy-MM-dd') : post.date
+        date: formattedDate
       });
-      if (response.data && Array.isArray(response.data)) {
-        const updatedPosts = response.data.map(post => ({
-          ...post,
-          date: parseISO(post.date),
-          formatted_date: format(parseISO(post.date), 'MMM dd, yyyy')
-        }));
-        setCalendarData(updatedPosts);
-        toast.success('Post removed successfully');
-      } else if (response.data && response.data.result === 'success') {
-        // Handle case where successful removal doesn't return updated posts
+
+      if (response.data && response.data.result === 'success') {
         toast.success('Post removed successfully');
         await handleGetCalendar(); // Refresh the calendar data
       } else {
@@ -314,17 +316,7 @@ const Index = () => {
       }
     } catch (error) {
       console.error('Error removing post:', error);
-      if (error.response) {
-        console.error('Response data:', error.response.data);
-        console.error('Response status:', error.response.status);
-        toast.error(`Failed to remove post: ${error.response.data.message || error.response.statusText}`);
-      } else if (error.request) {
-        console.error('No response received:', error.request);
-        toast.error('Failed to remove post: No response received from server');
-      } else {
-        console.error('Error details:', error.message);
-        toast.error(`Failed to remove post: ${error.message}`);
-      }
+      toast.error(`Failed to remove post: ${error.message}`);
     } finally {
       setIsLoading(false);
     }

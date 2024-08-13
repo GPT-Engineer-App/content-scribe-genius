@@ -658,7 +658,7 @@ const Index = () => {
                           {post.status}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-700 mb-2 line-clamp-2">{post.content || 'No content available'}</p>
+                      <p className="text-sm text-gray-700 mb-2 line-clamp-2">{post.summary || 'No summary available'}</p>
                       {post.image_url && (
                         <img src={post.image_url} alt="Post" className="w-full h-32 object-cover rounded-md mb-2" />
                       )}
@@ -695,11 +695,6 @@ const Index = () => {
                     Refresh Calendar
                   </Button>
                 </div>
-              )}
-              {calendarData.length > 0 && (
-                <pre className="text-xs mt-4 bg-gray-100 p-2 rounded">
-                  {JSON.stringify(calendarData, null, 2)}
-                </pre>
               )}
             </div>
           </div>
@@ -811,26 +806,6 @@ const Index = () => {
               <p className="text-sm text-transparent">Placeholder</p>
             )}
           </div>
-        </div>
-      )}
-      {showStickyLog && (
-        <div
-          ref={stickyLogRef}
-          className="fixed bottom-0 right-0 w-1/3 h-1/3 bg-white border border-gray-300 overflow-auto p-4 shadow-lg"
-          style={{ zIndex: 1000 }}
-        >
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="text-lg font-semibold">Calendar Response Log</h3>
-            <Button
-              onClick={() => setShowStickyLog(false)}
-              variant="ghost"
-              size="sm"
-              className="p-1"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          <pre className="text-xs whitespace-pre-wrap">{calendarResponse}</pre>
         </div>
       )}
     </div>

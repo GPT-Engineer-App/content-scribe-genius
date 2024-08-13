@@ -584,11 +584,16 @@ const Index = () => {
           <div className="flex flex-col md:flex-row gap-4">
             <div className="bg-white p-4 rounded-md shadow-md">
               <CalendarComponent
-                mode="single"
-                selected={scheduledDate}
-                onSelect={setScheduledDate}
+                mode="multiple"
+                selected={calendarData.map(post => new Date(post.date))}
                 className="rounded-md border"
                 weekStartsOn={1}
+                modifiers={{
+                  scheduled: calendarData.map(post => new Date(post.date)),
+                }}
+                modifiersStyles={{
+                  scheduled: { backgroundColor: '#0A66C2', color: 'white' },
+                }}
               />
             </div>
             <div className="mt-4 md:mt-0 bg-white p-4 rounded-md shadow-md flex-grow">

@@ -281,10 +281,22 @@ const Index = () => {
       }
     } catch (error) {
       console.error('Error fetching calendar data:', error);
-      toast.error('Failed to fetch calendar data. Please try again.');
-      setCalendarResponse(JSON.stringify(error, null, 2)); // Store the error response
-      setShowStickyLog(true);
-      setCalendarData([]);
+      // Check if the error response contains valid calendar data
+      if (error.response && Array.isArray(error.response.data) && error.response.data.length > 0) {
+        const calendarList = error.response.data.map(item => ({
+          ...item,
+          date: item.date ? parseISO(item.date) : null,
+          formatted_date: item.date ? format(parseISO(item.date), 'MMM dd, yyyy') : 'No date'
+        }));
+        calendarList.sort((a, b) => (a.date && b.date) ? a.date - b.date : 0);
+        setCalendarData(calendarList);
+        console.log('Calendar data set from error response:', calendarList);
+      } else {
+        toast.error('Failed to fetch calendar data. Please try again.');
+        setCalendarResponse(JSON.stringify(error, null, 2)); // Store the error response
+        setShowStickyLog(true);
+        setCalendarData([]);
+      }
     } finally {
       setIsLoading(false);
     }

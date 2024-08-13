@@ -17,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogTrigger,
 } from "@/components/ui/dialog"
 import { toast } from "sonner"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
@@ -48,6 +49,7 @@ const Index = () => {
   const [calendarResponse, setCalendarResponse] = useState(null);
   const [showStickyLog, setShowStickyLog] = useState(false);
   const [newPostGenerated, setNewPostGenerated] = useState(false);
+  const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
 
   const stickyLogRef = useRef(null);
 
@@ -361,7 +363,10 @@ const Index = () => {
                       <div
                         key={index}
                         className={`${getPostColor(post.status)} text-white text-xs p-1 mb-1 rounded cursor-pointer`}
-                        onClick={() => setSelectedPost(post)}
+                        onClick={() => {
+                          setSelectedPost(post);
+                          setIsPostDialogOpen(true);
+                        }}
                       >
                         <div>{post.title || 'Untitled'}</div>
                         <div className="text-[10px] mt-1">{post.formatted_date}</div>
@@ -473,6 +478,64 @@ const Index = () => {
           <DialogFooter>
             <Button onClick={() => handleRemovePost(editedPost)}>Remove</Button>
             <Button onClick={handleSave}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  };
+
+  const PostDialog = () => {
+    if (!selectedPost) return null;
+
+    return (
+      <Dialog open={isPostDialogOpen} onOpenChange={setIsPostDialogOpen}>
+        <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{selectedPost.title || 'Untitled Post'}</DialogTitle>
+            <DialogDescription>
+              {selectedPost.formatted_date} - Status: {selectedPost.status}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4">
+            {selectedPost.image_url && (
+              <img src={selectedPost.image_url} alt="Post" className="w-full h-auto object-cover rounded-md mb-4" />
+            )}
+            <div className="prose max-w-none">
+              <ReactMarkdown
+                components={{
+                  p: ({ children }) => <p className="mb-4">{children}</p>,
+                  h1: ({ children }) => <h1 className="text-2xl font-bold mb-2">{children}</h1>,
+                  h2: ({ children }) => <h2 className="text-xl font-semibold mb-2">{children}</h2>,
+                  h3: ({ children }) => <h3 className="text-lg font-medium mb-2">{children}</h3>,
+                  ul: ({ children }) => <ul className="list-disc pl-5 mb-4">{children}</ul>,
+                  ol: ({ children }) => <ol className="list-decimal pl-5 mb-4">{children}</ol>,
+                  li: ({ children }) => <li className="mb-1">{children}</li>,
+                  blockquote: ({ children }) => <blockquote className="border-l-4 border-gray-300 pl-4 italic my-4">{children}</blockquote>,
+                  code: ({ node, inline, className, children, ...props }) => {
+                    const match = /language-(\w+)/.exec(className || '')
+                    return !inline && match ? (
+                      <SyntaxHighlighter
+                        style={vscDarkPlus}
+                        language={match[1]}
+                        PreTag="div"
+                        {...props}
+                      >
+                        {String(children).replace(/\n$/, '')}
+                      </SyntaxHighlighter>
+                    ) : (
+                      <code className={className} {...props}>
+                        {children}
+                      </code>
+                    )
+                  },
+                }}
+              >
+                {selectedPost.content || 'No content available'}
+              </ReactMarkdown>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setIsPostDialogOpen(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -662,7 +725,10 @@ const Index = () => {
                 ) : calendarData.length > 0 ? (
                   <ul className="space-y-4 max-h-96 overflow-y-auto">
                     {calendarData.filter(post => post.status !== 'removed').map((post, index) => (
-                      <li key={index} className="bg-white shadow-md rounded-lg p-4">
+                      <li key={index} className="bg-white shadow-md rounded-lg p-4 cursor-pointer" onClick={() => {
+                        setSelectedPost(post);
+                        setIsPostDialogOpen(true);
+                      }}>
                         <div className="flex justify-between items-start mb-2">
                           <div>
                             <h4 className="font-semibold text-lg">{post.title || 'Untitled'}</h4>
@@ -682,7 +748,10 @@ const Index = () => {
                         )}
                         <div className="flex justify-end space-x-2">
                           <Button
-                            onClick={() => handleReschedulePost(post)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleReschedulePost(post);
+                            }}
                             className="text-xs"
                             variant="outline"
                             size="sm"
@@ -691,7 +760,10 @@ const Index = () => {
                             Reschedule
                           </Button>
                           <Button
-                            onClick={() => handleRemovePost(post)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemovePost(post);
+                            }}
                             className="text-xs"
                             variant="destructive"
                             size="sm"
@@ -719,6 +791,7 @@ const Index = () => {
           </div>
         </TabsContent>
       </Tabs>
+      <PostDialog />
       {newPostGenerated && activeTab === "generator" && (
         <div className="fixed bottom-0 left-0 right-0 bg-white bg-opacity-60 backdrop-blur-sm p-4 shadow-md">
           <div className="container mx-auto flex flex-wrap justify-center gap-2 mb-2">

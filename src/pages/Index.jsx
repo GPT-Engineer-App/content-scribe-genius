@@ -642,14 +642,14 @@ const Index = () => {
                   <Loader2 className="h-8 w-8 animate-spin" />
                 </div>
               ) : calendarData.length > 0 ? (
-                <ul className="space-y-2 max-h-96 overflow-y-auto">
+                <ul className="space-y-4 max-h-96 overflow-y-auto">
                   {calendarData.filter(post => post.status !== 'removed').map((post, index) => (
-                    <li key={index} className="flex items-center justify-between border-b pb-2">
-                      <div className="flex flex-col">
-                        <span className="font-semibold">{post.formatted_date}</span>
-                        <span>{post.title || 'Untitled'}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
+                    <li key={index} className="bg-white shadow-md rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h4 className="font-semibold text-lg">{post.title || 'Untitled'}</h4>
+                          <p className="text-sm text-gray-500">{post.formatted_date}</p>
+                        </div>
                         <span className={`px-2 py-1 text-xs rounded-full font-bold ${
                           post.status === 'ready' ? 'bg-blue-500 text-white' :
                           post.status === 'done' ? 'bg-green-500 text-white' :
@@ -657,12 +657,19 @@ const Index = () => {
                         }`}>
                           {post.status}
                         </span>
+                      </div>
+                      <p className="text-sm text-gray-700 mb-2 line-clamp-2">{post.content || 'No content available'}</p>
+                      {post.image_url && (
+                        <img src={post.image_url} alt="Post" className="w-full h-32 object-cover rounded-md mb-2" />
+                      )}
+                      <div className="flex justify-end space-x-2">
                         <Button
                           onClick={() => handleReschedulePost(post)}
                           className="text-xs"
                           variant="outline"
                           size="sm"
                         >
+                          <Calendar className="mr-1 h-3 w-3" />
                           Reschedule
                         </Button>
                         <Button
@@ -671,7 +678,8 @@ const Index = () => {
                           variant="destructive"
                           size="sm"
                         >
-                          Cancel
+                          <X className="mr-1 h-3 w-3" />
+                          Remove
                         </Button>
                       </div>
                     </li>

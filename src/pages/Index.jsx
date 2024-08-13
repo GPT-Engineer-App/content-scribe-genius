@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { useQuery } from "@tanstack/react-query";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
@@ -43,7 +44,7 @@ const Index = () => {
   const [calendarData, setCalendarData] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
   const [isCalendarDialogOpen, setIsCalendarDialogOpen] = useState(false);
-  const [showCalendar, setShowCalendar] = useState(false);
+  const [activeTab, setActiveTab] = useState("generator");
   const [calendarResponse, setCalendarResponse] = useState(null);
   const [showStickyLog, setShowStickyLog] = useState(false);
 
@@ -238,7 +239,7 @@ const Index = () => {
   const handleGetCalendar = async () => {
     setActiveButton('get_calendar');
     setIsLoading(true);
-    setShowCalendar(true);
+    setActiveTab("calendar");
     try {
       const response = await axios.get('https://hook.eu1.make.com/kn986l8l6n8lod1vxti2wfgjoxntmsya?action=get_2weeks');
       const data = response.data;
@@ -470,236 +471,230 @@ const Index = () => {
   return (
     <div className="container mx-auto p-4 pb-40 min-h-screen overflow-y-auto">
       <h1 className="text-2xl font-bold mb-4 text-center sm:text-left">Content Generation App</h1>
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-          <Textarea
-            name="news"
-            id="news"
-            value={formData.news}
-            onChange={handleInputChange}
-            placeholder="Enter news..."
-            className="flex-grow"
-            rows={3}
-          />
-          <Button 
-            onClick={() => handleSubmit('get_news')} 
-            className="h-12 sm:h-24 sm:w-24 bg-gradient-to-r from-[#A062F9] to-[#1A77DA] hover:from-[#8A4EE8] hover:to-[#1665C0] transition-all duration-300 shadow-md hover:shadow-lg"
-          >
-            {activeButton === 'get_news' && isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              "Get News"
-            )}
-          </Button>
-        </div>
-        <Input
-          name="personal"
-          id="personal"
-          value={formData.personal}
-          onChange={handleInputChange}
-          placeholder="Personal"
-        />
-        <Input
-          name="controversial"
-          id="controversial"
-          value={formData.controversial}
-          onChange={handleInputChange}
-          placeholder="Controversial"
-        />
-        <Input
-          name="inspiring"
-          id="inspiring"
-          value={formData.inspiring}
-          onChange={handleInputChange}
-          placeholder="Inspiring"
-        />
-        <div className="flex space-x-2">
-          <Button 
-            onClick={() => handleSubmit('generate')} 
-            disabled={isLoading}
-            className="bg-gradient-to-r from-[#A062F9] to-[#1A77DA] hover:from-[#8A4EE8] hover:to-[#1665C0] transition-all duration-300 shadow-md hover:shadow-lg"
-          >
-            {activeButton === 'generate' && isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <>
-                <Send className="mr-2 h-4 w-4" />
-                Generate
-              </>
-            )}
-          </Button>
-          <Button
-            onClick={handleGetCalendar}
-            disabled={isLoading}
-            className="bg-gradient-to-r from-[#FFA500] to-[#FF6347] hover:from-[#FF8C00] hover:to-[#FF4500] transition-all duration-300 shadow-md hover:shadow-lg"
-          >
-            {activeButton === 'get_calendar' && isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <>
-                <Calendar className="mr-2 h-4 w-4" />
-                Calendar
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
-
-      {isLoading && (
-        <div className="mt-4 flex items-center">
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          <p>Processing request, please wait...</p>
-        </div>
-      )}
-      {error && <p className="mt-4 text-red-500">Error: {error}</p>}
-
-      {data && !showCalendar && (
-        <div className="mt-8 pb-20">
-          <h2 className="text-xl font-semibold mb-2">Generated Content:</h2>
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              {image && (
-                <div className="mb-4 relative">
-                  <img src={image} alt="Generated" className="max-w-full h-auto rounded-md" />
-                  <Button
-                    className="absolute top-2 right-2 p-2 bg-white bg-opacity-70 rounded-full hover:bg-opacity-100 transition-all duration-200"
-                    onClick={() => handleSubmit('generate_image')}
-                  >
-                    <RefreshCw className="h-4 w-4 text-black" />
-                  </Button>
-                </div>
-              )}
-              {(draft || (data && data.result_text)) && (
-                <div className="bg-gray-100 p-4 rounded-md">
-                  <ReactMarkdown
-                    components={{
-                      p: ({ children }) => <p className="mb-4">{children}</p>,
-                      h1: ({ children }) => <h1 className="text-2xl font-bold mb-2">{children}</h1>,
-                      h2: ({ children }) => <h2 className="text-xl font-semibold mb-2">{children}</h2>,
-                      h3: ({ children }) => <h3 className="text-lg font-medium mb-2">{children}</h3>,
-                      ul: ({ children }) => <ul className="list-disc pl-5 mb-4">{children}</ul>,
-                      ol: ({ children }) => <ol className="list-decimal pl-5 mb-4">{children}</ol>,
-                      li: ({ children }) => <li className="mb-1">{children}</li>,
-                      blockquote: ({ children }) => <blockquote className="border-l-4 border-gray-300 pl-4 italic my-4">{children}</blockquote>,
-                      code: ({ node, inline, className, children, ...props }) => {
-                        const match = /language-(\w+)/.exec(className || '')
-                        return !inline && match ? (
-                          <SyntaxHighlighter
-                            style={vscDarkPlus}
-                            language={match[1]}
-                            PreTag="div"
-                            {...props}
-                          >
-                            {String(children).replace(/\n$/, '')}
-                          </SyntaxHighlighter>
-                        ) : (
-                          <code className={className} {...props}>
-                            {children}
-                          </code>
-                        )
-                      },
-                    }}
-                  >
-                    {draft || (data && data.result_text) || ''}
-                  </ReactMarkdown>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-      {showCalendar && (
-        <div className="mt-8 pb-20">
-          <h2 className="text-xl font-semibold mb-2">Calendar</h2>
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="bg-white p-4 rounded-md shadow-md">
-              <CalendarComponent
-                mode="multiple"
-                selected={calendarData.filter(post => post.status !== 'removed' && post.date).map(post => {
-                  try {
-                    return parseISO(post.date);
-                  } catch (error) {
-                    console.error('Error parsing date:', post.date, error);
-                    return null;
-                  }
-                }).filter(Boolean)}
-                className="rounded-md border"
-                weekStartsOn={1}
-                modifiers={{
-                  done: calendarData.filter(post => post.status === 'done' && post.date).map(post => new Date(post.date)),
-                  ready: calendarData.filter(post => post.status === 'ready' && post.date).map(post => new Date(post.date)),
-                }}
-                modifiersStyles={{
-                  done: { backgroundColor: '#10B981', color: 'white' },
-                  ready: { backgroundColor: '#3B82F6', color: 'white' },
-                }}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 sticky top-0 z-10 bg-white">
+          <TabsTrigger value="generator">Generator</TabsTrigger>
+          <TabsTrigger value="calendar" onClick={handleGetCalendar}>Calendar</TabsTrigger>
+        </TabsList>
+        <TabsContent value="generator">
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+              <Textarea
+                name="news"
+                id="news"
+                value={formData.news}
+                onChange={handleInputChange}
+                placeholder="Enter news..."
+                className="flex-grow"
+                rows={3}
               />
+              <Button 
+                onClick={() => handleSubmit('get_news')} 
+                className="h-12 sm:h-24 sm:w-24 bg-gradient-to-r from-[#A062F9] to-[#1A77DA] hover:from-[#8A4EE8] hover:to-[#1665C0] transition-all duration-300 shadow-md hover:shadow-lg"
+              >
+                {activeButton === 'get_news' && isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Get News"
+                )}
+              </Button>
             </div>
-            <div className="mt-4 md:mt-0 bg-white p-4 rounded-md shadow-md flex-grow">
-              <h3 className="text-lg font-semibold mb-2">Scheduled Posts</h3>
-              {isLoading ? (
-                <div className="flex justify-center items-center h-32">
-                  <Loader2 className="h-8 w-8 animate-spin" />
-                </div>
-              ) : calendarData.length > 0 ? (
-                <ul className="space-y-4 max-h-96 overflow-y-auto">
-                  {calendarData.filter(post => post.status !== 'removed').map((post, index) => (
-                    <li key={index} className="bg-white shadow-md rounded-lg p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h4 className="font-semibold text-lg">{post.title || 'Untitled'}</h4>
-                          <p className="text-sm text-gray-500">{post.formatted_date}</p>
-                        </div>
-                        <span className={`px-2 py-1 text-xs rounded-full font-bold ${
-                          post.status === 'ready' ? 'bg-blue-500 text-white' :
-                          post.status === 'done' ? 'bg-green-500 text-white' :
-                          'bg-gray-200 text-gray-800'
-                        }`}>
-                          {post.status}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-700 mb-2 line-clamp-2">{post.summary || 'No summary available'}</p>
-                      {post.image_url && (
-                        <img src={post.image_url} alt="Post" className="w-full h-32 object-cover rounded-md mb-2" />
-                      )}
-                      <div className="flex justify-end space-x-2">
-                        <Button
-                          onClick={() => handleReschedulePost(post)}
-                          className="text-xs"
-                          variant="outline"
-                          size="sm"
-                        >
-                          <Calendar className="mr-1 h-3 w-3" />
-                          Reschedule
-                        </Button>
-                        <Button
-                          onClick={() => handleRemovePost(post)}
-                          className="text-xs"
-                          variant="destructive"
-                          size="sm"
-                        >
-                          <X className="mr-1 h-3 w-3" />
-                          Remove
-                        </Button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">No scheduled posts found.</p>
-                  <Button
-                    onClick={handleGetCalendar}
-                    className="mt-4"
-                  >
-                    Refresh Calendar
-                  </Button>
-                </div>
-              )}
+            <Input
+              name="personal"
+              id="personal"
+              value={formData.personal}
+              onChange={handleInputChange}
+              placeholder="Personal"
+            />
+            <Input
+              name="controversial"
+              id="controversial"
+              value={formData.controversial}
+              onChange={handleInputChange}
+              placeholder="Controversial"
+            />
+            <Input
+              name="inspiring"
+              id="inspiring"
+              value={formData.inspiring}
+              onChange={handleInputChange}
+              placeholder="Inspiring"
+            />
+            <div className="flex space-x-2">
+              <Button 
+                onClick={() => handleSubmit('generate')} 
+                disabled={isLoading}
+                className="bg-gradient-to-r from-[#A062F9] to-[#1A77DA] hover:from-[#8A4EE8] hover:to-[#1665C0] transition-all duration-300 shadow-md hover:shadow-lg"
+              >
+                {activeButton === 'generate' && isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <Send className="mr-2 h-4 w-4" />
+                    Generate
+                  </>
+                )}
+              </Button>
             </div>
           </div>
-        </div>
-      )}
+
+          {isLoading && (
+            <div className="mt-4 flex items-center">
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <p>Processing request, please wait...</p>
+            </div>
+          )}
+          {error && <p className="mt-4 text-red-500">Error: {error}</p>}
+
+          {data && (
+            <div className="mt-8 pb-20">
+              <h2 className="text-xl font-semibold mb-2">Generated Content:</h2>
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  {image && (
+                    <div className="mb-4 relative">
+                      <img src={image} alt="Generated" className="max-w-full h-auto rounded-md" />
+                      <Button
+                        className="absolute top-2 right-2 p-2 bg-white bg-opacity-70 rounded-full hover:bg-opacity-100 transition-all duration-200"
+                        onClick={() => handleSubmit('generate_image')}
+                      >
+                        <RefreshCw className="h-4 w-4 text-black" />
+                      </Button>
+                    </div>
+                  )}
+                  {(draft || (data && data.result_text)) && (
+                    <div className="bg-gray-100 p-4 rounded-md">
+                      <ReactMarkdown
+                        components={{
+                          p: ({ children }) => <p className="mb-4">{children}</p>,
+                          h1: ({ children }) => <h1 className="text-2xl font-bold mb-2">{children}</h1>,
+                          h2: ({ children }) => <h2 className="text-xl font-semibold mb-2">{children}</h2>,
+                          h3: ({ children }) => <h3 className="text-lg font-medium mb-2">{children}</h3>,
+                          ul: ({ children }) => <ul className="list-disc pl-5 mb-4">{children}</ul>,
+                          ol: ({ children }) => <ol className="list-decimal pl-5 mb-4">{children}</ol>,
+                          li: ({ children }) => <li className="mb-1">{children}</li>,
+                          blockquote: ({ children }) => <blockquote className="border-l-4 border-gray-300 pl-4 italic my-4">{children}</blockquote>,
+                          code: ({ node, inline, className, children, ...props }) => {
+                            const match = /language-(\w+)/.exec(className || '')
+                            return !inline && match ? (
+                              <SyntaxHighlighter
+                                style={vscDarkPlus}
+                                language={match[1]}
+                                PreTag="div"
+                                {...props}
+                              >
+                                {String(children).replace(/\n$/, '')}
+                              </SyntaxHighlighter>
+                            ) : (
+                              <code className={className} {...props}>
+                                {children}
+                              </code>
+                            )
+                          },
+                        }}
+                      >
+                        {draft || (data && data.result_text) || ''}
+                      </ReactMarkdown>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </TabsContent>
+        <TabsContent value="calendar">
+          <div className="mt-8 pb-20">
+            <h2 className="text-xl font-semibold mb-2">Calendar</h2>
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="bg-white p-4 rounded-md shadow-md">
+                <CalendarComponent
+                  mode="multiple"
+                  selected={calendarData.filter(post => post.status !== 'removed' && post.date).map(post => {
+                    try {
+                      return parseISO(post.date);
+                    } catch (error) {
+                      console.error('Error parsing date:', post.date, error);
+                      return null;
+                    }
+                  }).filter(Boolean)}
+                  className="rounded-md border"
+                  weekStartsOn={1}
+                  modifiers={{
+                    done: calendarData.filter(post => post.status === 'done' && post.date).map(post => new Date(post.date)),
+                    ready: calendarData.filter(post => post.status === 'ready' && post.date).map(post => new Date(post.date)),
+                  }}
+                  modifiersStyles={{
+                    done: { backgroundColor: '#10B981', color: 'white' },
+                    ready: { backgroundColor: '#3B82F6', color: 'white' },
+                  }}
+                />
+              </div>
+              <div className="mt-4 md:mt-0 bg-white p-4 rounded-md shadow-md flex-grow">
+                <h3 className="text-lg font-semibold mb-2">Scheduled Posts</h3>
+                {isLoading ? (
+                  <div className="flex justify-center items-center h-32">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : calendarData.length > 0 ? (
+                  <ul className="space-y-4 max-h-96 overflow-y-auto">
+                    {calendarData.filter(post => post.status !== 'removed').map((post, index) => (
+                      <li key={index} className="bg-white shadow-md rounded-lg p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <h4 className="font-semibold text-lg">{post.title || 'Untitled'}</h4>
+                            <p className="text-sm text-gray-500">{post.formatted_date}</p>
+                          </div>
+                          <span className={`px-2 py-1 text-xs rounded-full font-bold ${
+                            post.status === 'ready' ? 'bg-blue-500 text-white' :
+                            post.status === 'done' ? 'bg-green-500 text-white' :
+                            'bg-gray-200 text-gray-800'
+                          }`}>
+                            {post.status}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-700 mb-2 line-clamp-2">{post.summary || 'No summary available'}</p>
+                        {post.image_url && (
+                          <img src={post.image_url} alt="Post" className="w-full h-32 object-cover rounded-md mb-2" />
+                        )}
+                        <div className="flex justify-end space-x-2">
+                          <Button
+                            onClick={() => handleReschedulePost(post)}
+                            className="text-xs"
+                            variant="outline"
+                            size="sm"
+                          >
+                            <Calendar className="mr-1 h-3 w-3" />
+                            Reschedule
+                          </Button>
+                          <Button
+                            onClick={() => handleRemovePost(post)}
+                            className="text-xs"
+                            variant="destructive"
+                            size="sm"
+                          >
+                            <X className="mr-1 h-3 w-3" />
+                            Remove
+                          </Button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">No scheduled posts found.</p>
+                    <Button
+                      onClick={handleGetCalendar}
+                      className="mt-4"
+                    >
+                      Refresh Calendar
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
       {draft && (
         <div className="fixed bottom-0 left-0 right-0 bg-white bg-opacity-60 backdrop-blur-sm p-4 shadow-md">
           <div className="container mx-auto flex flex-wrap justify-center gap-2 mb-2">

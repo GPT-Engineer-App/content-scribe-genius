@@ -1,16 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
-import { Input } from "@/components/ui/input"
+import { useQuery } from "@tanstack/react-query";
 import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
-import { Loader2, RefreshCw, Send, Image, Upload, Repeat, Calendar } from "lucide-react"
+import { Loader2, Copy, RefreshCw, Send, Image, Upload, Repeat, Calendar, X } from "lucide-react"
+import JSON5 from 'json5';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -18,7 +20,7 @@ import {
 import { toast } from "sonner"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { format, parseISO } from "date-fns"
+import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns"
 
 const Index = () => {
   const [formData, setFormData] = useState({
@@ -27,15 +29,25 @@ const Index = () => {
     controversial: '',
     inspiring: '',
   });
-  const [showCalendar, setShowCalendar] = useState(false);
   const [draft, setDraft] = useState('');
   const [image, setImage] = useState(null);
+  const [fileName, setFileName] = useState('');
+  const [imageUploaded, setImageUploaded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [data, setData] = useState(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogContent, setDialogContent] = useState(null);
   const [activeButton, setActiveButton] = useState(null);
   const [scheduledDate, setScheduledDate] = useState(null);
   const [calendarData, setCalendarData] = useState([]);
+  const [selectedPost, setSelectedPost] = useState(null);
+  const [isCalendarDialogOpen, setIsCalendarDialogOpen] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [calendarResponse, setCalendarResponse] = useState(null);
+  const [showStickyLog, setShowStickyLog] = useState(false);
+
+  const stickyLogRef = useRef(null);
 
   useEffect(() => {
     const savedContent = sessionStorage.getItem('generatedContent');
@@ -84,6 +96,7 @@ const Index = () => {
   };
 
   const makeWebhookCall = async (action = 'generate') => {
+    console.log(`Starting webhook call for action: ${action}`);
     setIsLoading(true);
     setError(null);
     try {
@@ -92,8 +105,12 @@ const Index = () => {
         action,
         draft,
         image: image || null,
+        file_name: fileName || null,
+        image_url: data?.result_image || null,
         scheduled_date: scheduledDate ? format(scheduledDate, 'yyyy-MM-dd') : null,
       };
+      console.log('Payload prepared:', payload);
+      setImageUploaded(false); // Reset the flag after sending the request
 
       const response = await axios.put('https://hook.eu1.make.com/7hok9kqjre31fea5p7yi9ialusmbvlkc', payload, {
         headers: {
@@ -102,19 +119,54 @@ const Index = () => {
         },
       });
       
+      console.log("Raw webhook response:", response.data);
+      
       if (response.status === 200 && response.data) {
-        let parsedData = Array.isArray(response.data) ? response.data[0] : response.data;
+        let parsedData = response.data;
         
+        // Check if the response is a string, if so, try to parse it
+        if (typeof response.data === 'string') {
+          try {
+            parsedData = JSON.parse(response.data);
+          } catch (parseError) {
+            console.error('Error parsing response:', parseError);
+            throw new Error('Failed to parse server response');
+          }
+        }
+        
+        // If parsedData is an array, take the first item
+        if (Array.isArray(parsedData)) {
+          parsedData = parsedData[0];
+        }
+        
+        console.log('Parsed response data:', parsedData);
+        
+        // Function to sanitize text
         const sanitizeText = (text) => {
           if (typeof text !== 'string') return text;
           return text.replace(/\\n/g, '\n').replace(/\\/g, '');
         };
         
-        const sanitizedText = sanitizeText(parsedData.result_text);
-        const is_news = parsedData.is_news;
-        const result_image = parsedData.result_image || '';
+        // Extract and sanitize the result_text and is_news
+        let sanitizedText, is_news;
+        if (Array.isArray(parsedData) && parsedData.length > 0) {
+          const firstItem = parsedData[0];
+          sanitizedText = sanitizeText(firstItem.result_text);
+          is_news = firstItem.is_news;
+        } else if (typeof parsedData === 'object' && parsedData !== null) {
+          sanitizedText = sanitizeText(parsedData.result_text);
+          is_news = parsedData.is_news;
+        } else {
+          throw new Error('Unexpected response format from server');
+        }
         
+        if (sanitizedText === undefined || is_news === undefined) {
+          throw new Error('Missing required data in server response');
+        }
+        
+        const result_image = parsedData.result_image || '';
         setData({ result_text: sanitizedText, is_news, result_image });
+        console.log('Extracted data:', { result_text: sanitizedText, is_news, result_image });
         
         if (is_news) {
           setFormData(prevData => ({ ...prevData, news: sanitizedText }));
@@ -126,15 +178,28 @@ const Index = () => {
           setImage(result_image);
         }
 
+        // Store the generated content in sessionStorage
         sessionStorage.setItem('generatedContent', JSON.stringify({ result_text: sanitizedText, is_news, result_image }));
+        console.log('Content stored in sessionStorage');
       } else {
         throw new Error('Unexpected response from server');
       }
     } catch (err) {
       console.error('Error in makeWebhookCall:', err);
-      setError(err.message || 'An unknown error occurred');
+      let errorMessage;
+      if (err.response) {
+        errorMessage = `Server error: ${err.response.status} ${err.response.statusText}`;
+      } else if (err.request) {
+        errorMessage = 'No response received from the server. Please check your network connection.';
+      } else {
+        errorMessage = err.message || 'An unknown error occurred';
+      }
+      setError(errorMessage);
+      setDialogContent({ error: errorMessage });
+      setDialogOpen(true);
     } finally {
       setIsLoading(false);
+      console.log('Webhook call completed');
     }
   };
 
@@ -177,28 +242,29 @@ const Index = () => {
     try {
       const response = await axios.get('https://hook.eu1.make.com/kn986l8l6n8lod1vxti2wfgjoxntmsya?action=get_2weeks');
       const data = response.data;
-      addToConsoleLog(data); // Log the calendar data
-      if (Array.isArray(data) && data.length > 0) {
-        let calendarList = [];
-        data.forEach(item => {
-          if (item.calendar_list && Array.isArray(item.calendar_list)) {
-            calendarList = calendarList.concat(item.calendar_list.map(post => ({
-              ...post,
-              date: post.date ? parseISO(post.date) : null,
-              formatted_date: post.formatted_date || (post.date ? format(parseISO(post.date), 'MMM dd, yyyy') : 'No date')
-            })));
-          }
-        });
+      setCalendarResponse(JSON.stringify(data, null, 2)); // Store the raw response
+      setShowStickyLog(true);
+      if (Array.isArray(data) && data.length > 0 && data[0].calendar_list) {
+        let calendarList = data[0].calendar_list.map(post => ({
+          ...post,
+          date: post.date ? parseISO(post.date) : null,
+          formatted_date: post.date ? format(parseISO(post.date), 'MMM dd, yyyy') : 'No date'
+        }));
         // Sort the calendar data by date
         calendarList.sort((a, b) => (a.date && b.date) ? a.date - b.date : 0);
         setCalendarData(calendarList);
         console.log('Calendar data set:', calendarList);
       } else {
-        throw new Error('Invalid response format');
+        setCalendarData([]);
+        console.log('No calendar data found or invalid format');
+        toast.warning('No scheduled posts found.');
       }
     } catch (error) {
       console.error('Error fetching calendar data:', error);
       toast.error('Failed to fetch calendar data. Please try again.');
+      setCalendarResponse(JSON.stringify(error, null, 2)); // Store the error response
+      setShowStickyLog(true);
+      setCalendarData([]);
     } finally {
       setIsLoading(false);
     }
@@ -522,7 +588,11 @@ const Index = () => {
             </div>
             <div className="mt-4 md:mt-0 bg-white p-4 rounded-md shadow-md flex-grow">
               <h3 className="text-lg font-semibold mb-2">Scheduled Posts</h3>
-              {calendarData.length > 0 ? (
+              {isLoading ? (
+                <div className="flex justify-center items-center h-32">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+              ) : calendarData.length > 0 ? (
                 <ul className="space-y-2 max-h-96 overflow-y-auto">
                   {calendarData.map((post, index) => (
                     <li key={index} className="flex items-center justify-between border-b pb-2">
@@ -547,7 +617,20 @@ const Index = () => {
                   ))}
                 </ul>
               ) : (
-                <p>No scheduled posts.</p>
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No scheduled posts found.</p>
+                  <Button
+                    onClick={handleGetCalendar}
+                    className="mt-4"
+                  >
+                    Refresh Calendar
+                  </Button>
+                </div>
+              )}
+              {calendarData.length > 0 && (
+                <pre className="text-xs mt-4 bg-gray-100 p-2 rounded">
+                  {JSON.stringify(calendarData, null, 2)}
+                </pre>
               )}
             </div>
           </div>
@@ -661,58 +744,26 @@ const Index = () => {
           </div>
         </div>
       )}
-    </div>
-  );
-
-  const [consoleLog, setConsoleLog] = useState([]);
-
-  useEffect(() => {
-    const savedLog = sessionStorage.getItem('consoleLog');
-    if (savedLog) {
-      setConsoleLog(JSON.parse(savedLog));
-    }
-  }, []);
-
-  useEffect(() => {
-    sessionStorage.setItem('consoleLog', JSON.stringify(consoleLog));
-  }, [consoleLog]);
-
-  const addToConsoleLog = (message) => {
-    setConsoleLog(prevLog => {
-      const newLog = [...prevLog, message];
-      if (newLog.length > 5) {
-        newLog.shift();
-      }
-      return newLog;
-    });
-  };
-
-  return (
-    <div className="container mx-auto p-4 pb-40 min-h-screen overflow-y-auto">
-      <h1 className="text-2xl font-bold mb-4 text-center sm:text-left">Content Generation App</h1>
-      <div className="space-y-4">
-        {/* ... existing content ... */}
-      </div>
-
-      {isLoading && (
-        <div className="mt-4 flex items-center">
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          <p>Processing request, please wait...</p>
+      {showStickyLog && (
+        <div
+          ref={stickyLogRef}
+          className="fixed bottom-0 right-0 w-1/3 h-1/3 bg-white border border-gray-300 overflow-auto p-4 shadow-lg"
+          style={{ zIndex: 1000 }}
+        >
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-lg font-semibold">Calendar Response Log</h3>
+            <Button
+              onClick={() => setShowStickyLog(false)}
+              variant="ghost"
+              size="sm"
+              className="p-1"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <pre className="text-xs whitespace-pre-wrap">{calendarResponse}</pre>
         </div>
       )}
-      {error && <p className="mt-4 text-red-500">Error: {error}</p>}
-
-      {/* ... rest of the existing content ... */}
-
-      {/* Sticky Console Log */}
-      <div className="fixed bottom-0 left-0 right-0 bg-black bg-opacity-80 text-white p-4 font-mono text-sm z-50">
-        <h3 className="text-lg font-semibold mb-2">Console Log:</h3>
-        <div className="max-h-40 overflow-y-auto">
-          {consoleLog.map((log, index) => (
-            <pre key={index} className="mb-1">{JSON.stringify(log, null, 2)}</pre>
-          ))}
-        </div>
-      </div>
     </div>
   );
 };

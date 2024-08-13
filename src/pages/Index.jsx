@@ -320,7 +320,7 @@ const Index = () => {
       setIsLoading(true);
       const response = await axios.put('https://hook.eu1.make.com/kn986l8l6n8lod1vxti2wfgjoxntmsya', {
         action: 'reschedule',
-        date: selectedPost.date,
+        date: selectedPost.date instanceof Date ? format(selectedPost.date, 'yyyy-MM-dd') : selectedPost.date,
         new_date: format(newDate, 'yyyy-MM-dd')
       });
       if (response.data && response.data.result === 'success') {
@@ -484,31 +484,42 @@ const Index = () => {
     );
   };
 
-  const RescheduleDialog = () => (
-    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Reschedule Post</DialogTitle>
-          <DialogDescription>
-            Choose a new date for this post.
-          </DialogDescription>
-        </DialogHeader>
-        <CalendarComponent
-          mode="single"
-          selected={selectedPost ? parseISO(selectedPost.date) : undefined}
-          onSelect={(date) => {
-            if (date) {
-              handleRescheduleConfirm(date);
-            }
-          }}
-          initialFocus
-        />
-        <DialogFooter>
-          <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
+  const RescheduleDialog = () => {
+    const safeParseDate = (dateString) => {
+      if (typeof dateString === 'string') {
+        return parseISO(dateString);
+      } else if (dateString instanceof Date) {
+        return dateString;
+      }
+      return new Date(); // Fallback to current date
+    };
+
+    return (
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Reschedule Post</DialogTitle>
+            <DialogDescription>
+              Choose a new date for this post.
+            </DialogDescription>
+          </DialogHeader>
+          <CalendarComponent
+            mode="single"
+            selected={selectedPost ? safeParseDate(selectedPost.date) : undefined}
+            onSelect={(date) => {
+              if (date) {
+                handleRescheduleConfirm(date);
+              }
+            }}
+            initialFocus
+          />
+          <DialogFooter>
+            <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  };
 
   return (
     <div className="container mx-auto p-4 pb-40 min-h-screen overflow-y-auto">

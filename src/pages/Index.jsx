@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -47,8 +47,16 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState("generator");
   const [calendarResponse, setCalendarResponse] = useState(null);
   const [showStickyLog, setShowStickyLog] = useState(false);
+  const [newPostGenerated, setNewPostGenerated] = useState(false);
 
   const stickyLogRef = useRef(null);
+
+  const handleTabChange = useCallback((newTab) => {
+    setActiveTab(newTab);
+    if (newTab !== "generator") {
+      setNewPostGenerated(false);
+    }
+  }, []);
 
   useEffect(() => {
     const savedContent = sessionStorage.getItem('generatedContent');
@@ -182,6 +190,9 @@ const Index = () => {
         // Store the generated content in sessionStorage
         sessionStorage.setItem('generatedContent', JSON.stringify({ result_text: sanitizedText, is_news, result_image }));
         console.log('Content stored in sessionStorage');
+
+        // Set newPostGenerated to true when a new post is generated
+        setNewPostGenerated(true);
       } else {
         throw new Error('Unexpected response from server');
       }
@@ -471,7 +482,7 @@ const Index = () => {
   return (
     <div className="container mx-auto p-4 pb-40 min-h-screen overflow-y-auto">
       <h1 className="text-2xl font-bold mb-4 text-center sm:text-left">Content Generation App</h1>
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-2 sticky top-0 z-10 bg-white">
           <TabsTrigger value="generator">Generator</TabsTrigger>
           <TabsTrigger value="calendar" onClick={handleGetCalendar}>Calendar</TabsTrigger>
@@ -695,7 +706,7 @@ const Index = () => {
           </div>
         </TabsContent>
       </Tabs>
-      {draft && (
+      {newPostGenerated && activeTab === "generator" && (
         <div className="fixed bottom-0 left-0 right-0 bg-white bg-opacity-60 backdrop-blur-sm p-4 shadow-md">
           <div className="container mx-auto flex flex-wrap justify-center gap-2 mb-2">
             <div className="w-full sm:w-auto">

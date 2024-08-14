@@ -62,6 +62,16 @@ const Index = () => {
 
   const stickyLogRef = useRef(null);
 
+  const handleReGenerate = () => {
+    console.log("Re-generate triggered with options:", reGenerateOptions);
+    if (reGenerateOptions.model && reGenerateOptions.length && reGenerateOptions.style) {
+      makeWebhookCall('regenerate', reGenerateOptions);
+    } else {
+      console.log("Please select all options before re-generating");
+      toast.error("Please select all options before re-generating");
+    }
+  };
+
   const handleTabChange = useCallback((newTab) => {
     setActiveTab(newTab);
   }, []);

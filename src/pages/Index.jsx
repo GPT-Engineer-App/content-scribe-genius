@@ -891,18 +891,12 @@ const Index = () => {
           <div className="container mx-auto flex flex-wrap justify-center gap-2 mb-2">
             <div className="w-full sm:w-auto">
               <Button 
-                onClick={() => handleSubmit('re-generate')}
+                onClick={() => setIsReGenerateDialogOpen(true)}
                 className="w-full sm:w-auto text-sm sm:text-base py-1 sm:py-2 px-2 sm:px-4"
               >
-              {activeButton === 're-generate' && isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <>
-                  <Repeat className="mr-2 h-4 w-4" />
-                  Re-generate
-                </>
-              )}
-            </Button>
+                <Repeat className="mr-2 h-4 w-4" />
+                Re-generate
+              </Button>
             </div>
             <div className="w-full sm:w-auto">
               <Button 

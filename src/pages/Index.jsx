@@ -39,7 +39,7 @@ const Index = () => {
     news: '',
     personal: '',
     controversial: '',
-    inspiring: '',
+    projects: '',
   });
   const [draft, setDraft] = useState('');
   const [image, setImage] = useState(null);
@@ -113,7 +113,7 @@ const Index = () => {
       news: '',
       personal: '',
       controversial: '',
-      inspiring: '',
+      projects: '',
     });
     setDraft('');
     setImage(null);
@@ -663,21 +663,21 @@ const Index = () => {
               id="personal"
               value={formData.personal}
               onChange={handleInputChange}
-              placeholder="Personal"
+              placeholder="Personal thoughts.."
             />
             <Input
               name="controversial"
               id="controversial"
               value={formData.controversial}
               onChange={handleInputChange}
-              placeholder="Controversial"
+              placeholder="Controversial thoughts.."
             />
             <Input
-              name="inspiring"
-              id="inspiring"
-              value={formData.inspiring}
+              name="projects"
+              id="projects"
+              value={formData.projects}
               onChange={handleInputChange}
-              placeholder="Inspiring"
+              placeholder="Project updates.."
             />
             <div className="flex space-x-2">
               <Button 

@@ -128,6 +128,7 @@ const Index = () => {
   return (
     <div className="container mx-auto p-4 pb-40 min-h-screen overflow-y-auto">
       <h1 className="text-2xl font-bold mb-4 text-center sm:text-left">Content Generation App</h1>
+      <RescheduleDialog />
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-2 sticky top-0 z-10 bg-white">
           <TabsTrigger 

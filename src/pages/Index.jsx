@@ -47,6 +47,7 @@ const Index = () => {
   const [calendarData, setCalendarData] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
   const [isCalendarDialogOpen, setIsCalendarDialogOpen] = useState(false);
+const [isReGenerateDialogOpen, setIsReGenerateDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("generator");
   const [calendarResponse, setCalendarResponse] = useState(null);
   const [showStickyLog, setShowStickyLog] = useState(false);

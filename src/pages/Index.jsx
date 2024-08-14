@@ -1061,12 +1061,12 @@ const Index = () => {
                   <Label htmlFor="same">Same</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="shorten" id="shorten" />
-                  <Label htmlFor="shorten">Shorten</Label>
+                  <RadioGroupItem value="Shorty" id="Shorty" />
+                  <Label htmlFor="Shorty">Shorty</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="extend" id="extend" />
-                  <Label htmlFor="extend">Extend</Label>
+                  <RadioGroupItem value="Extender" id="Extender" />
+                  <Label htmlFor="Extender">Extender</Label>
                 </div>
               </RadioGroup>
             </div>
@@ -1082,8 +1082,8 @@ const Index = () => {
                   <Label htmlFor="default">Default</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="Personal+" id="personal" />
-                  <Label htmlFor="personal">Personal+</Label>
+                  <RadioGroupItem value="myStory" id="myStory" />
+                  <Label htmlFor="myStory">myStory</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="WisdomDrop" id="wisdom" />

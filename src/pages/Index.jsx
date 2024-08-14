@@ -24,6 +24,15 @@ import { toast } from "sonner"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, parse, isValid, addDays } from "date-fns"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Label } from "@/components/ui/label"
 
 const Index = () => {
   const [formData, setFormData] = useState({
@@ -51,12 +60,28 @@ const Index = () => {
   const [calendarResponse, setCalendarResponse] = useState(null);
   const [showStickyLog, setShowStickyLog] = useState(false);
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
+  const [isReGenerateDialogOpen, setIsReGenerateDialogOpen] = useState(false);
+  const [reGenerateOptions, setReGenerateOptions] = useState({
+    model: 'OpenAI',
+    length: 'same',
+    style: 'default'
+  });
 
   const stickyLogRef = useRef(null);
 
   const handleTabChange = useCallback((newTab) => {
     setActiveTab(newTab);
   }, []);
+
+  const handleReGenerateOptionChange = (option, value) => {
+    setReGenerateOptions(prev => ({ ...prev, [option]: value }));
+  };
+
+  const handleReGenerate = () => {
+    console.log('Re-generate options:', reGenerateOptions);
+    setIsReGenerateDialogOpen(false);
+    makeWebhookCall('re-generate');
+  };
 
   useEffect(() => {
     const savedContent = sessionStorage.getItem('generatedContent');
@@ -134,6 +159,11 @@ const Index = () => {
         image_url: data?.result_image || null,
         scheduled_date: scheduledDate ? format(scheduledDate, 'yyyy-MM-dd') : null,
       };
+
+      if (action === 're-generate') {
+        payload.reGenerateOptions = reGenerateOptions;
+      }
+
       console.log('Payload prepared:', payload);
       setImageUploaded(false); // Reset the flag after sending the request
 
@@ -892,7 +922,7 @@ const Index = () => {
             <div className="w-full sm:w-auto">
               <Button 
                 onClick={() => setIsReGenerateDialogOpen(true)}
-                className="w-full sm:w-auto text-sm sm:text-base py-1 sm:py-2 px-2 sm:px-4"
+                className={`w-full sm:w-auto text-sm sm:text-base py-1 sm:py-2 px-2 sm:px-4 ${isReGenerateDialogOpen ? 'bg-green-500 hover:bg-green-600' : ''}`}
               >
                 <Repeat className="mr-2 h-4 w-4" />
                 Re-generate
@@ -990,6 +1020,83 @@ const Index = () => {
           </div>
         </div>
       )}
+
+      <Dialog open={isReGenerateDialogOpen} onOpenChange={setIsReGenerateDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Re-generate Options</DialogTitle>
+            <DialogDescription>
+              Choose your preferences for content re-generation.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="model" className="text-right">
+                Model
+              </Label>
+              <Select
+                id="model"
+                value={reGenerateOptions.model}
+                onValueChange={(value) => handleReGenerateOptionChange('model', value)}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select model" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="OpenAI">OpenAI</SelectItem>
+                  <SelectItem value="Claude">Claude</SelectItem>
+                  <SelectItem value="OpenRouter">OpenRouter</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">Length</Label>
+              <RadioGroup
+                value={reGenerateOptions.length}
+                onValueChange={(value) => handleReGenerateOptionChange('length', value)}
+                className="col-span-3 flex"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="same" id="same" />
+                  <Label htmlFor="same">Same</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="shorten" id="shorten" />
+                  <Label htmlFor="shorten">Shorten</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="extend" id="extend" />
+                  <Label htmlFor="extend">Extend</Label>
+                </div>
+              </RadioGroup>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">Style</Label>
+              <RadioGroup
+                value={reGenerateOptions.style}
+                onValueChange={(value) => handleReGenerateOptionChange('style', value)}
+                className="col-span-3 flex"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="default" id="default" />
+                  <Label htmlFor="default">Default</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Personal+" id="personal" />
+                  <Label htmlFor="personal">Personal+</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="WisdomDrop" id="wisdom" />
+                  <Label htmlFor="wisdom">WisdomDrop</Label>
+                </div>
+              </RadioGroup>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleReGenerate} className="bg-green-500 hover:bg-green-600">Re-generate</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

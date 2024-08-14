@@ -54,7 +54,11 @@ const Index = () => {
   const [calendarResponse, setCalendarResponse] = useState(null);
   const [showStickyLog, setShowStickyLog] = useState(false);
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
-  const [isReGenerateDialogOpen, setIsReGenerateDialogOpen] = useState(false);
+  const [reGenerateOptions, setReGenerateOptions] = useState({
+  model: '',
+  length: '',
+  style: ''
+});
 
   const stickyLogRef = useRef(null);
 
@@ -123,7 +127,7 @@ const Index = () => {
     }
   };
 
-  const makeWebhookCall = async (action = 'generate') => {
+  const makeWebhookCall = async (action = 'generate', options = {}) => {
     console.log(`Starting webhook call for action: ${action}`);
     setIsLoading(true);
     setError(null);
@@ -137,6 +141,7 @@ const Index = () => {
         file_name: fileName || null,
         image_url: data?.result_image || null,
         scheduled_date: scheduledDate ? format(scheduledDate, 'yyyy-MM-dd') : null,
+        ...options,
       };
       console.log('Payload prepared:', payload);
       setImageUploaded(false); // Reset the flag after sending the request
@@ -893,13 +898,60 @@ const Index = () => {
       {((draft && draft.trim() !== '') || (data && data.result_text && data.result_text.trim() !== '')) && activeTab === "generator" && (
         <div className="fixed bottom-0 left-0 right-0 bg-white bg-opacity-60 backdrop-blur-sm p-4 shadow-md">
           <div className="container mx-auto flex flex-wrap justify-center gap-2 mb-2">
+            <div className="w-full flex flex-wrap justify-center gap-2 mb-2">
+              <Select
+                value={reGenerateOptions.model}
+                onValueChange={(value) => setReGenerateOptions(prev => ({ ...prev, model: value }))}
+                className="w-full sm:w-auto"
+              >
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="Select model" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
+                  <SelectItem value="gpt-4">GPT-4</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value={reGenerateOptions.length}
+                onValueChange={(value) => setReGenerateOptions(prev => ({ ...prev, length: value }))}
+                className="w-full sm:w-auto"
+              >
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="Select length" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="short">Short</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="long">Long</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value={reGenerateOptions.style}
+                onValueChange={(value) => setReGenerateOptions(prev => ({ ...prev, style: value }))}
+                className="w-full sm:w-auto"
+              >
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="Select style" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="neutral">Neutral</SelectItem>
+                  <SelectItem value="formal">Formal</SelectItem>
+                  <SelectItem value="casual">Casual</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="w-full sm:w-auto">
               <Button 
                 onClick={() => {
-                  console.log("Re-generate button clicked");
-                  setIsReGenerateDialogOpen(true);
+                  console.log("Re-generate button clicked", reGenerateOptions);
+                  handleReGenerate(reGenerateOptions);
                 }}
-                className="w-full sm:w-auto text-sm sm:text-base py-1 sm:py-2 px-2 sm:px-4"
+                className={`w-full sm:w-auto text-sm sm:text-base py-1 sm:py-2 px-2 sm:px-4 ${
+                  reGenerateOptions.model && reGenerateOptions.length && reGenerateOptions.style
+                    ? 'bg-green-500 hover:bg-green-600'
+                    : ''
+                }`}
               >
                 <Repeat className="mr-2 h-4 w-4" />
                 Re-generate

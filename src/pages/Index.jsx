@@ -51,6 +51,7 @@ const Index = () => {
   const [calendarResponse, setCalendarResponse] = useState(null);
   const [showStickyLog, setShowStickyLog] = useState(false);
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
+  const [isReGenerateDialogOpen, setIsReGenerateDialogOpen] = useState(false);
 
   const stickyLogRef = useRef(null);
 
@@ -891,7 +892,10 @@ const Index = () => {
           <div className="container mx-auto flex flex-wrap justify-center gap-2 mb-2">
             <div className="w-full sm:w-auto">
               <Button 
-                onClick={() => setIsReGenerateDialogOpen(true)}
+                onClick={() => {
+                  console.log("Re-generate button clicked");
+                  setIsReGenerateDialogOpen(true);
+                }}
                 className="w-full sm:w-auto text-sm sm:text-base py-1 sm:py-2 px-2 sm:px-4"
               >
                 <Repeat className="mr-2 h-4 w-4" />

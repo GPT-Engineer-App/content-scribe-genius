@@ -908,9 +908,18 @@ const Index = () => {
               Are you sure you want to schedule this post for {scheduledDate ? format(scheduledDate, 'PPP') : 'the selected date'}?
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
-            <Button onClick={() => setIsScheduleConfirmOpen(false)}>Cancel</Button>
-            <Button onClick={handleScheduleConfirm} disabled={isLoading}>
+          <DialogFooter className="sm:flex-row flex-col gap-2">
+            <Button 
+              onClick={() => setIsScheduleConfirmOpen(false)}
+              className="w-full sm:w-auto px-5 py-2 sm:py-0"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleScheduleConfirm} 
+              disabled={isLoading}
+              className="w-full sm:w-auto px-5 py-2 sm:py-0"
+            >
               {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirm"}
             </Button>
           </DialogFooter>

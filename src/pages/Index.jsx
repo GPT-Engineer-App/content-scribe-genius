@@ -362,28 +362,22 @@ const Index = () => {
   const handleScheduleConfirm = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.put('https://hook.eu1.make.com/kn986l8l6n8lod1vxti2wfgjoxntmsya', {
+      await axios.put('https://hook.eu1.make.com/kn986l8l6n8lod1vxti2wfgjoxntmsya', {
         action: 'add_item',
         date: format(scheduledDate, 'yyyy-MM-dd'),
         content: draft || (data && data.result_text) || '',
         image_url: image || '',
-        title: 'Scheduled Post', // You might want to generate a title or let the user input one
+        title: 'Scheduled Post',
       });
-      if (response.data && response.data.result === 'success') {
-        toast.success('Post scheduled successfully');
-        setScheduledDate(null);
-        setIsScheduleConfirmOpen(false);
-        handleTabChange("calendar");
-        // Only call handleGetCalendar if the webhook was successful
-        if (webhookSuccess) {
-          handleGetCalendar();
-        }
-      } else {
-        throw new Error('Failed to schedule post');
-      }
+      
+      // Always call handleGetCalendar after scheduling, regardless of the response
+      await handleGetCalendar();
+      
+      setScheduledDate(null);
+      setIsScheduleConfirmOpen(false);
+      handleTabChange("calendar");
     } catch (error) {
       console.error('Error scheduling post:', error);
-      toast.error('Failed to schedule post. Please try again.');
     } finally {
       setIsLoading(false);
     }

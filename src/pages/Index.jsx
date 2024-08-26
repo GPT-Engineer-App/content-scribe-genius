@@ -158,10 +158,11 @@ const Index = () => {
             }
           );
           
-          if (response.status === 200) {
+          if (response.status === 200 && response.data && response.data.result_image) {
+            setImage(response.data.result_image);
             toast.success("Image uploaded successfully!");
           } else {
-            throw new Error("Upload failed");
+            throw new Error("Upload failed or invalid response");
           }
         } catch (error) {
           console.error('Error uploading image:', error);

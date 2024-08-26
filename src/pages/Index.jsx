@@ -126,21 +126,41 @@ const Index = () => {
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Check file size (limit to 10MB)
+      const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+      if (file.size > maxSize) {
+        console.error('File is too large. Maximum size is 10MB.');
+        return;
+      }
+
       setFileName(file.name);
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const imageData = reader.result;
-        setImage(imageData);
-        setImageUploaded(true);
-        
-        // Trigger webhook with image data
-        await makeWebhookCall({
-          upload_image: true,
-          image: imageData,
-          file_name: file.name
+      setIsLoading(true);
+
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('fileName', file.name);
+        formData.append('fileType', file.type);
+
+        const response = await axios.post('https://hook.eu1.make.com/yiumowsd1sn4uq44424yyba8wkz5w4pk', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
         });
-      };
-      reader.readAsDataURL(file);
+
+        if (response.data && response.data.imageUrl) {
+          setImage(response.data.imageUrl);
+          setImageUploaded(true);
+          console.log('Image uploaded successfully');
+        } else {
+          throw new Error('Invalid response from server');
+        }
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        setImageUploaded(false);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 

@@ -421,7 +421,6 @@ const Index = () => {
   };
 
   const handleRescheduleConfirm = async (newDate) => {
-    let webhookSuccess = false;
     try {
       setIsLoading(true);
       const response = await axios.put('https://hook.eu1.make.com/kn986l8l6n8lod1vxti2wfgjoxntmsya', {
@@ -436,14 +435,8 @@ const Index = () => {
           formatted_date: format(parseISO(post.date), 'MMM dd, yyyy')
         }));
         setCalendarData(updatedPosts);
-        const rescheduledPost = updatedPosts.find(post => format(post.date, 'yyyy-MM-dd') === format(newDate, 'yyyy-MM-dd'));
-        if (rescheduledPost) {
-          toast.success('Post rescheduled successfully');
-          console.log('Updated calendar data:', updatedPosts);
-          webhookSuccess = true;
-        } else {
-          throw new Error('Rescheduled post not found in the response');
-        }
+        toast.success('Post rescheduled successfully');
+        console.log('Updated calendar data:', updatedPosts);
       } else {
         throw new Error('Unexpected response format');
       }
@@ -453,9 +446,7 @@ const Index = () => {
     } finally {
       setIsLoading(false);
       setDialogOpen(false);
-      if (webhookSuccess) {
-        handleGetCalendar(); // Refresh the calendar data only if webhook was successful
-      }
+      handleGetCalendar(); // Always refresh the calendar data
     }
   };
 
@@ -626,18 +617,14 @@ const Index = () => {
           <CalendarComponent
             mode="single"
             selected={newDate || (selectedPost ? safeParseDate(selectedPost.date) : undefined)}
-            onSelect={setNewDate}
+            onSelect={(date) => {
+              setNewDate(date);
+              handleRescheduleConfirm(date);
+            }}
             initialFocus
           />
           <DialogFooter>
             <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={() => {
-              if (newDate) {
-                handleRescheduleConfirm(newDate);
-              }
-            }} disabled={!newDate}>
-              Confirm
-            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

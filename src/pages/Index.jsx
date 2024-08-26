@@ -41,34 +41,6 @@ const Index = () => {
     controversial: '',
     projects: '',
   });
-
-  const handleBinaryUpload = async (file) => {
-    try {
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        const binaryData = event.target.result;
-        const response = await axios.post('https://hook.eu1.make.com/yiumowsd1sn4uq44424yyba8wkz5w4pk', binaryData, {
-          headers: {
-            'Content-Type': 'application/octet-stream',
-            'X-File-Name': file.name,
-            'X-File-Type': file.type
-          }
-        });
-        console.log('Binary upload response:', response.data);
-        if (response.data && response.data.imageUrl) {
-          setImage(response.data.imageUrl);
-          setImageUploaded(true);
-          toast.success('Image uploaded successfully');
-        } else {
-          throw new Error('Invalid response from server');
-        }
-      };
-      reader.readAsArrayBuffer(file);
-    } catch (error) {
-      console.error('Error in binary upload:', error);
-      toast.error('Failed to upload image. Please try again.');
-    }
-  };
   const [draft, setDraft] = useState('');
   const [image, setImage] = useState(null);
   const [fileName, setFileName] = useState('');
@@ -154,27 +126,21 @@ const Index = () => {
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Check file size (limit to 10MB)
-      const maxSize = 10 * 1024 * 1024; // 10MB in bytes
-      if (file.size > maxSize) {
-        console.error('File is too large. Maximum size is 10MB.');
-        toast.error('File is too large. Maximum size is 10MB.');
-        return;
-      }
-
       setFileName(file.name);
-      setIsLoading(true);
-
-      try {
-        console.log('Uploading file:', file.name, 'Type:', file.type, 'Size:', file.size);
-        await handleBinaryUpload(file);
-      } catch (error) {
-        console.error('Error uploading image:', error);
-        setImageUploaded(false);
-        toast.error('Failed to upload image. Please try again.');
-      } finally {
-        setIsLoading(false);
-      }
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const imageData = reader.result;
+        setImage(imageData);
+        setImageUploaded(true);
+        
+        // Trigger webhook with image data
+        await makeWebhookCall({
+          upload_image: true,
+          image: imageData,
+          file_name: file.name
+        });
+      };
+      reader.readAsDataURL(file);
     }
   };
 

@@ -138,7 +138,6 @@ const Index = () => {
       const reader = new FileReader();
       reader.onloadend = async () => {
         const imageData = reader.result;
-        setImage(imageData);
         setImageUploaded(true);
         
         // Prepare FormData for binary upload
@@ -159,7 +158,12 @@ const Index = () => {
           );
           
           if (response.status === 200 && response.data && response.data.result_image) {
-            setImage(response.data.result_image);
+            const newImageUrl = response.data.result_image;
+            setImage(newImageUrl);
+            setData(prevData => ({
+              ...prevData,
+              result_image: newImageUrl
+            }));
             toast.success("Image uploaded successfully!");
           } else {
             throw new Error("Upload failed or invalid response");
@@ -183,7 +187,7 @@ const Index = () => {
         ...formData,
         action,
         draft,
-        image_url: data?.result_image || null,
+        image_url: data?.result_image || image || null,
         scheduled_date: scheduledDate ? format(scheduledDate, 'yyyy-MM-dd') : null,
       };
 
@@ -265,6 +269,13 @@ const Index = () => {
         sessionStorage.setItem('generatedContent', JSON.stringify({ result_text: sanitizedText, is_news, result_image }));
         console.log('Content stored in sessionStorage');
 
+        // Show success message for specific actions
+        if (action === 'post_linkedin') {
+          toast.success("Post successfully sent to LinkedIn!");
+        } else if (action === 'add_item') {
+          toast.success("Post successfully scheduled!");
+        }
+
       } else {
         throw new Error('Unexpected response from server');
       }
@@ -279,8 +290,7 @@ const Index = () => {
         errorMessage = err.message || 'An unknown error occurred';
       }
       setError(errorMessage);
-      setDialogContent({ error: errorMessage });
-      setDialogOpen(true);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
       console.log('Webhook call completed');

@@ -123,43 +123,24 @@ const Index = () => {
     sessionStorage.removeItem('generatedContent');
   };
 
-  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
-
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > MAX_FILE_SIZE) {
-        console.error('File size exceeds the limit of 10 MB');
-        return;
-      }
-
       setFileName(file.name);
-      setIsLoading(true);
-
-      try {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('file_name', file.name);
-        formData.append('file_type', file.type);
-
-        const response = await axios.post('https://hook.eu1.make.com/yiumowsd1sn4uq44424yyba8wkz5w4pk', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const imageData = reader.result;
+        setImage(imageData);
+        setImageUploaded(true);
+        
+        // Trigger webhook with image data
+        await makeWebhookCall({
+          upload_image: true,
+          image: imageData,
+          file_name: file.name
         });
-
-        if (response.data && response.data.image_url) {
-          setImage(response.data.image_url);
-          setImageUploaded(true);
-        } else {
-          throw new Error('Image upload failed');
-        }
-      } catch (error) {
-        console.error('Error uploading image:', error);
-        setImageUploaded(false);
-      } finally {
-        setIsLoading(false);
-      }
+      };
+      reader.readAsDataURL(file);
     }
   };
 

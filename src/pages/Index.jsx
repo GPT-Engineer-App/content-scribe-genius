@@ -127,18 +127,46 @@ const Index = () => {
     const file = e.target.files[0];
     if (file) {
       setFileName(file.name);
+      
+      // Check file size (limit to 10MB)
+      const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+      if (file.size > maxSize) {
+        toast.error("File size exceeds 10MB limit. Please choose a smaller file.");
+        return;
+      }
+
       const reader = new FileReader();
       reader.onloadend = async () => {
         const imageData = reader.result;
         setImage(imageData);
         setImageUploaded(true);
         
-        // Trigger webhook with image data
-        await makeWebhookCall({
-          upload_image: true,
-          image: imageData,
-          file_name: file.name
-        });
+        // Prepare FormData for binary upload
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('fileName', file.name);
+        formData.append('fileType', file.type);
+
+        try {
+          const response = await axios.post(
+            'https://hook.eu1.make.com/7hok9kqjre31fea5p7yi9ialusmbvlkc',
+            formData,
+            {
+              headers: {
+                'Content-Type': 'multipart/form-data',
+              },
+            }
+          );
+          
+          if (response.status === 200) {
+            toast.success("Image uploaded successfully!");
+          } else {
+            throw new Error("Upload failed");
+          }
+        } catch (error) {
+          console.error('Error uploading image:', error);
+          toast.error("Failed to upload image. Please try again.");
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -154,8 +182,6 @@ const Index = () => {
         ...formData,
         action,
         draft,
-        image: image || null,
-        file_name: fileName || null,
         image_url: data?.result_image || null,
         scheduled_date: scheduledDate ? format(scheduledDate, 'yyyy-MM-dd') : null,
       };
@@ -167,7 +193,7 @@ const Index = () => {
       console.log('Payload prepared:', payload);
       setImageUploaded(false); // Reset the flag after sending the request
 
-      const response = await axios.put('https://hook.eu1.make.com/7hok9kqjre31fea5p7yi9ialusmbvlkc', payload, {
+      const response = await axios.post('https://hook.eu1.make.com/7hok9kqjre31fea5p7yi9ialusmbvlkc', payload, {
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*',

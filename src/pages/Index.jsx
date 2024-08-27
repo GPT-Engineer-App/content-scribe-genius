@@ -471,30 +471,7 @@ const Index = () => {
     }
   };
 
-  const RescheduleDialog = () => {
-    return (
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Reschedule Post</DialogTitle>
-            <DialogDescription>
-              Choose a new date for this post.
-            </DialogDescription>
-          </DialogHeader>
-          <CalendarComponent
-            mode="single"
-            selected={selectedPost ? (selectedPost.date instanceof Date ? selectedPost.date : parseISO(selectedPost.date)) : undefined}
-            onSelect={(date) => {
-              if (date) {
-                handleRescheduleConfirm(date);
-              }
-            }}
-            initialFocus
-          />
-        </DialogContent>
-      </Dialog>
-    );
-  };
+  // Removed duplicate RescheduleDialog declaration
 
   const getPostColor = (status) => {
     switch (status) {
@@ -666,6 +643,7 @@ const Index = () => {
             onSelect={(date) => {
               setNewDate(date);
               handleRescheduleConfirm(date);
+              setDialogOpen(false); // Close the dialog immediately
             }}
             initialFocus
           />

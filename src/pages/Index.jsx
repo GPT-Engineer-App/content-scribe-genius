@@ -423,31 +423,77 @@ const Index = () => {
   const handleRescheduleConfirm = async (newDate) => {
     try {
       setIsLoading(true);
-      const response = await axios.put('https://hook.eu1.make.com/kn986l8l6n8lod1vxti2wfgjoxntmsya', {
+      setDialogOpen(false); // Close the dialog immediately
+
+      // Optimistically update the UI
+      const updatedPosts = calendarData.map(post => 
+        post.id === selectedPost.id 
+          ? {...post, date: newDate, formatted_date: format(newDate, 'MMM dd, yyyy')} 
+          : post
+      );
+      setCalendarData(updatedPosts);
+
+      // Prepare the payload, ensuring special characters are properly encoded
+      const payload = {
         action: 'reschedule',
         date: selectedPost.date instanceof Date ? format(selectedPost.date, 'yyyy-MM-dd') : selectedPost.date,
-        new_date: format(newDate, 'yyyy-MM-dd')
-      });
+        new_date: format(newDate, 'yyyy-MM-dd'),
+        post_id: selectedPost.id, // Assuming each post has a unique id
+        title: selectedPost.title ? encodeURIComponent(selectedPost.title) : '',
+        content: selectedPost.content ? encodeURIComponent(selectedPost.content) : ''
+      };
+
+      const response = await axios.put('https://hook.eu1.make.com/kn986l8l6n8lod1vxti2wfgjoxntmsya', payload);
+    
       if (response.data && Array.isArray(response.data)) {
-        const updatedPosts = response.data.map(post => ({
+        // Update with server response
+        const serverUpdatedPosts = response.data.map(post => ({
           ...post,
           date: parseISO(post.date),
-          formatted_date: format(parseISO(post.date), 'MMM dd, yyyy')
+          formatted_date: format(parseISO(post.date), 'MMM dd, yyyy'),
+          title: decodeURIComponent(post.title || ''),
+          content: decodeURIComponent(post.content || '')
         }));
-        setCalendarData(updatedPosts);
-        toast.success('Post rescheduled successfully');
-        console.log('Updated calendar data:', updatedPosts);
+        setCalendarData(serverUpdatedPosts);
+        console.log('Updated calendar data from server:', serverUpdatedPosts);
       } else {
         throw new Error('Unexpected response format');
       }
+
+      toast.success('Post rescheduled successfully');
     } catch (error) {
       console.error('Error rescheduling post:', error);
       toast.error('Failed to reschedule post. Please try again.');
+      // Revert optimistic update on error
+      handleGetCalendar();
     } finally {
       setIsLoading(false);
-      setDialogOpen(false);
-      handleGetCalendar(); // Always refresh the calendar data
     }
+  };
+
+  const RescheduleDialog = () => {
+    return (
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Reschedule Post</DialogTitle>
+            <DialogDescription>
+              Choose a new date for this post.
+            </DialogDescription>
+          </DialogHeader>
+          <CalendarComponent
+            mode="single"
+            selected={selectedPost ? (selectedPost.date instanceof Date ? selectedPost.date : parseISO(selectedPost.date)) : undefined}
+            onSelect={(date) => {
+              if (date) {
+                handleRescheduleConfirm(date);
+              }
+            }}
+            initialFocus
+          />
+        </DialogContent>
+      </Dialog>
+    );
   };
 
   const getPostColor = (status) => {

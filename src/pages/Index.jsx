@@ -1179,8 +1179,20 @@ const Index = () => {
                 onClick={() => handleRecordingStart(type)}
                 className={`rounded-full w-24 h-24 flex flex-col items-center justify-center ${
                   isRecording && recordingType === type
-                    ? 'bg-red-500 animate-pulse'
-                    : 'bg-blue-500'
+                    ? 'animate-pulse'
+                    : ''
+                } ${
+                  type === 'personal'
+                    ? isRecording && recordingType === type
+                      ? 'bg-red-600'
+                      : 'bg-orange-500 hover:bg-orange-600'
+                    : type === 'project'
+                    ? isRecording && recordingType === type
+                      ? 'bg-red-600'
+                      : 'bg-blue-500 hover:bg-blue-600'
+                    : isRecording && recordingType === type
+                    ? 'bg-red-800'
+                    : 'bg-red-700 hover:bg-red-800'
                 }`}
               >
                 {isRecording && recordingType === type ? (

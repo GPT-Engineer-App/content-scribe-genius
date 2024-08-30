@@ -1223,9 +1223,6 @@ const handleRecordingStart = async (type) => {
     };
 
     mediaRecorderRef.current.start();
-    
-    // Add event listener to stop recording when clicking anywhere on the screen
-    document.addEventListener('click', handleRecordingStop);
   } catch (error) {
     console.error('Error starting recording:', error);
     toast.error('Failed to start recording. Please check your microphone permissions.');
@@ -1233,13 +1230,12 @@ const handleRecordingStart = async (type) => {
   }
 };
 
-const handleRecordingStop = useCallback(() => {
+const handleRecordingStop = () => {
   if (mediaRecorderRef.current && isRecording) {
     mediaRecorderRef.current.stop();
     setIsRecording(false);
-    document.removeEventListener('click', handleRecordingStop);
   }
-}, [isRecording]);
+};
 
 const handleAudioUpload = async (blob, type) => {
   setIsLoading(true);
@@ -1272,11 +1268,5 @@ const handleAudioUpload = async (blob, type) => {
     setIsDictateDialogOpen(false);
   }
 };
-
-useEffect(() => {
-  return () => {
-    document.removeEventListener('click', handleRecordingStop);
-  };
-}, [handleRecordingStop]);
 
 export default Index;

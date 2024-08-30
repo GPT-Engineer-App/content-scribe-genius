@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
-import { Loader2, Copy, RefreshCw, Send, Image, Upload, Repeat, Calendar, X, Sparkles, Mic, Square } from "lucide-react"
+import { Loader2, Copy, RefreshCw, Send, Image, Upload, Repeat, Calendar, X, Sparkles, Mic, StopCircle } from "lucide-react"
 import JSON5 from 'json5';
 import {
   Dialog,
@@ -60,21 +60,6 @@ const Index = () => {
   const [calendarResponse, setCalendarResponse] = useState(null);
   const [showStickyLog, setShowStickyLog] = useState(false);
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
-  const [isDictateDialogOpen, setIsDictateDialogOpen] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingType, setRecordingType] = useState(null);
-
-  const handleRecordingStart = (type) => {
-    setRecordingType(type);
-    setIsRecording(true);
-    // TODO: Implement actual recording logic
-  };
-
-  const handleRecordingStop = () => {
-    setIsRecording(false);
-    setIsDictateDialogOpen(false);
-    // TODO: Implement logic to send recording to webhook
-  };
   const [isReGenerateDialogOpen, setIsReGenerateDialogOpen] = useState(false);
   const [reGenerateOptions, setReGenerateOptions] = useState({
     model: 'OpenAI',
@@ -82,8 +67,8 @@ const Index = () => {
     style: 'default'
   });
   const [isDictateDialogOpen, setIsDictateDialogOpen] = useState(false);
-  const [recordingType, setRecordingType] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [recordingType, setRecordingType] = useState(null);
   const [audioBlob, setAudioBlob] = useState(null);
 
   const stickyLogRef = useRef(null);
@@ -1038,15 +1023,6 @@ const Index = () => {
               onChange={handleImageUpload}
               className="hidden"
             />
-            <div className="w-full sm:w-auto">
-              <Button
-                onClick={() => setIsDictateDialogOpen(true)}
-                className="w-full sm:w-auto text-sm sm:text-base py-1 sm:py-2 px-2 sm:px-4"
-              >
-                <Mic className="mr-2 h-4 w-4" />
-                Dictate
-              </Button>
-            </div>
             <div className="w-full sm:w-auto flex">
               <Button 
                 onClick={() => handleSubmit('post_linkedin')}
@@ -1108,47 +1084,6 @@ const Index = () => {
           </div>
         </div>
       )}
-
-      <Dialog open={isDictateDialogOpen} onOpenChange={setIsDictateDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Dictate Content</DialogTitle>
-            <DialogDescription>
-              Choose a category to start recording your content.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-center space-x-4 py-4">
-            {['personal', 'project', 'provoking'].map((type) => (
-              <Button
-                key={type}
-                onClick={() => handleRecordingStart(type)}
-                className={`rounded-full w-24 h-24 flex flex-col items-center justify-center ${
-                  isRecording && recordingType === type
-                    ? 'bg-red-500 animate-pulse'
-                    : 'bg-blue-500'
-                } text-white`}
-              >
-                {isRecording && recordingType === type ? (
-                  <Square className="h-8 w-8 mb-1" />
-                ) : (
-                  <Mic className="h-8 w-8 mb-1" />
-                )}
-                {type.charAt(0).toUpperCase() + type.slice(1)}
-              </Button>
-            ))}
-          </div>
-          {isRecording && (
-            <div className="flex justify-center mt-4">
-              <Button onClick={handleRecordingStop} variant="destructive">
-                Stop Recording
-              </Button>
-            </div>
-          )}
-          <DialogFooter>
-            <Button onClick={() => setIsDictateDialogOpen(false)}>Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={isReGenerateDialogOpen} onOpenChange={setIsReGenerateDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
@@ -1232,36 +1167,28 @@ const Index = () => {
           <DialogHeader>
             <DialogTitle>Dictate Content</DialogTitle>
             <DialogDescription>
-              Choose a category to start recording your content.
+              Choose a recording type and click to start recording.
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-center space-x-4 py-4">
             {['personal', 'project', 'provoking'].map((type) => (
               <Button
                 key={type}
-                onClick={() => handleRecordingStart(type)}
-                className={`rounded-full w-24 h-24 flex flex-col items-center justify-center ${
+                onClick={() => startRecording(type)}
+                className={`rounded-full w-16 h-16 ${
                   isRecording && recordingType === type
-                    ? 'bg-red-500 animate-pulse'
-                    : 'bg-blue-500'
-                } text-white`}
+                    ? 'bg-red-500 hover:bg-red-600 animate-pulse'
+                    : 'bg-blue-500 hover:bg-blue-600'
+                }`}
               >
                 {isRecording && recordingType === type ? (
-                  <Square className="h-8 w-8 mb-1" />
+                  <StopCircle className="h-8 w-8 text-white" />
                 ) : (
-                  <Mic className="h-8 w-8 mb-1" />
+                  <Mic className="h-8 w-8 text-white" />
                 )}
-                {type.charAt(0).toUpperCase() + type.slice(1)}
               </Button>
             ))}
           </div>
-          {isRecording && (
-            <div className="flex justify-center mt-4">
-              <Button onClick={handleRecordingStop} variant="destructive">
-                Stop Recording
-              </Button>
-            </div>
-          )}
           <DialogFooter>
             <Button onClick={() => setIsDictateDialogOpen(false)}>Close</Button>
           </DialogFooter>
@@ -1271,10 +1198,7 @@ const Index = () => {
   );
 };
 
-const handleRecordingStart = async (type) => {
-  setRecordingType(type);
-  setIsRecording(true);
-
+const startRecording = async (type) => {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     mediaRecorderRef.current = new MediaRecorder(stream);
@@ -1284,64 +1208,64 @@ const handleRecordingStart = async (type) => {
     mediaRecorderRef.current.onstop = () => {
       const blob = new Blob(chunks, { type: 'audio/webm' });
       setAudioBlob(blob);
-      handleAudioUpload(blob, type);
+      sendAudioToWebhook(blob, type);
     };
 
     mediaRecorderRef.current.start();
-    
-    // Add event listener to stop recording when clicking anywhere on the screen
-    document.addEventListener('click', handleRecordingStop);
-  } catch (error) {
-    console.error('Error starting recording:', error);
+    setIsRecording(true);
+    setRecordingType(type);
+
+    // Add click event listener to stop recording
+    document.addEventListener('click', stopRecording);
+  } catch (err) {
+    console.error('Error starting recording:', err);
     toast.error('Failed to start recording. Please check your microphone permissions.');
-    setIsRecording(false);
   }
 };
 
-const handleRecordingStop = useCallback(() => {
+const stopRecording = useCallback(() => {
   if (mediaRecorderRef.current && isRecording) {
     mediaRecorderRef.current.stop();
     setIsRecording(false);
-    document.removeEventListener('click', handleRecordingStop);
+    setRecordingType(null);
+    setIsDictateDialogOpen(false);
+
+    // Remove click event listener
+    document.removeEventListener('click', stopRecording);
   }
 }, [isRecording]);
 
-const handleAudioUpload = async (blob, type) => {
-  setIsLoading(true);
+useEffect(() => {
+  return () => {
+    document.removeEventListener('click', stopRecording);
+  };
+}, [stopRecording]);
+
+const sendAudioToWebhook = async (blob, type) => {
   const formData = new FormData();
-  formData.append('file', blob, 'audio.webm');
+  formData.append('audio', blob, 'recording.webm');
   formData.append('type', type);
 
   try {
-    const response = await axios.post(
-      'https://hook.eu1.make.com/7hok9kqjre31fea5p7yi9ialusmbvlkc',
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
-    );
-
+    setIsLoading(true);
+    const response = await axios.post('https://hook.eu1.make.com/7hok9kqjre31fea5p7yi9ialusmbvlkc', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
     if (response.data && response.data.result_text) {
       setDraft(response.data.result_text);
       toast.success('Audio transcribed and processed successfully!');
     } else {
-      throw new Error('Unexpected response format');
+      throw new Error('Unexpected response from server');
     }
   } catch (error) {
-    console.error('Error uploading audio:', error);
+    console.error('Error sending audio to webhook:', error);
     toast.error('Failed to process audio. Please try again.');
   } finally {
     setIsLoading(false);
-    setIsDictateDialogOpen(false);
   }
 };
-
-useEffect(() => {
-  return () => {
-    document.removeEventListener('click', handleRecordingStop);
-  };
-}, [handleRecordingStop]);
 
 export default Index;

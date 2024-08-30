@@ -4,18 +4,44 @@ import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Mic, StopCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 const Index = () => {
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingType, setRecordingType] = useState(null);
-  const [isDictateDialogOpen, setIsDictateDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     personal: '',
     project: '',
     controversial: ''
   });
+  const [generatedContent, setGeneratedContent] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingType, setRecordingType] = useState(null);
+  const [isDictateDialogOpen, setIsDictateDialogOpen] = useState(false);
   const mediaRecorderRef = useRef(null);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prevData => ({
+      ...prevData,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      const response = await axios.post('https://hook.eu1.make.com/7hok9kqjre31fea5p7yi9ialusmbvlkc', formData);
+      setGeneratedContent(response.data.generated_content);
+      toast.success('Content generated successfully!');
+    } catch (error) {
+      console.error('Error generating content:', error);
+      toast.error('Failed to generate content. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const startRecording = async (type) => {
     try {
@@ -118,15 +144,68 @@ const Index = () => {
 
   return (
     <div className="container mx-auto p-4 pb-40 min-h-screen overflow-y-auto">
-      {/* Existing content */}
-      <Button
-        onClick={() => setIsDictateDialogOpen(true)}
-        className="bg-gradient-to-r from-green-400 to-lime-500 hover:from-green-500 hover:to-lime-600 text-white font-bold py-2 px-4 rounded inline-flex items-center ml-2"
-      >
-        <Mic className="mr-2" /> Dictate
-      </Button>
+      <h1 className="text-3xl font-bold mb-6">Content Generation Dashboard</h1>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label htmlFor="personal" className="block text-sm font-medium text-gray-700">Personal Experience</label>
+          <Input
+            type="text"
+            id="personal"
+            name="personal"
+            value={formData.personal}
+            onChange={handleInputChange}
+            className="mt-1 block w-full"
+            placeholder="Enter a personal experience"
+          />
+        </div>
+        <div>
+          <label htmlFor="project" className="block text-sm font-medium text-gray-700">Project Details</label>
+          <Input
+            type="text"
+            id="project"
+            name="project"
+            value={formData.project}
+            onChange={handleInputChange}
+            className="mt-1 block w-full"
+            placeholder="Enter project details"
+          />
+        </div>
+        <div>
+          <label htmlFor="controversial" className="block text-sm font-medium text-gray-700">Controversial Topic</label>
+          <Input
+            type="text"
+            id="controversial"
+            name="controversial"
+            value={formData.controversial}
+            onChange={handleInputChange}
+            className="mt-1 block w-full"
+            placeholder="Enter a controversial topic"
+          />
+        </div>
+        <div className="flex space-x-2">
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? 'Generating...' : 'Generate'}
+          </Button>
+          <Button
+            type="button"
+            onClick={() => setIsDictateDialogOpen(true)}
+            className="bg-gradient-to-r from-green-400 to-lime-500 hover:from-green-500 hover:to-lime-600 text-white font-bold py-2 px-4 rounded inline-flex items-center"
+          >
+            <Mic className="mr-2" /> Dictate
+          </Button>
+        </div>
+      </form>
+      {generatedContent && (
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold mb-4">Generated Content</h2>
+          <Textarea
+            value={generatedContent}
+            readOnly
+            className="w-full h-64 p-2 border rounded"
+          />
+        </div>
+      )}
       <DictateDialog />
-      {/* Rest of the existing content */}
     </div>
   );
 };

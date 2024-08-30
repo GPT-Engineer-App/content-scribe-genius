@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
-import { Loader2, Copy, RefreshCw, Send, Image, Upload, Repeat, Calendar, X, Sparkles, Mic } from "lucide-react"
+import { Loader2, Copy, RefreshCw, Send, Image, Upload, Repeat, Calendar, X, Sparkles, Mic, StopCircle } from "lucide-react"
 import JSON5 from 'json5';
 import {
   Dialog,
@@ -67,8 +67,12 @@ const Index = () => {
     style: 'default'
   });
   const [isDictateDialogOpen, setIsDictateDialogOpen] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingType, setRecordingType] = useState(null);
+  const [audioBlob, setAudioBlob] = useState(null);
 
   const stickyLogRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
 
   const handleTabChange = useCallback((newTab) => {
     setActiveTab(newTab);
@@ -1163,20 +1167,27 @@ const Index = () => {
           <DialogHeader>
             <DialogTitle>Dictate Content</DialogTitle>
             <DialogDescription>
-              Click the button below to start dictating your content.
+              Choose a recording type and click to start recording.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex justify-center py-4">
-            <Button
-              onClick={() => {
-                // TODO: Implement voice recording logic
-                toast.info("Voice recording feature coming soon!");
-              }}
-              className="bg-gradient-to-r from-green-400 to-lime-500 hover:from-green-500 hover:to-lime-600"
-            >
-              <Mic className="mr-2 h-4 w-4" />
-              Start Recording
-            </Button>
+          <div className="flex justify-center space-x-4 py-4">
+            {['personal', 'project', 'provoking'].map((type) => (
+              <Button
+                key={type}
+                onClick={() => startRecording(type)}
+                className={`rounded-full w-16 h-16 ${
+                  isRecording && recordingType === type
+                    ? 'bg-red-500 hover:bg-red-600 animate-pulse'
+                    : 'bg-blue-500 hover:bg-blue-600'
+                }`}
+              >
+                {isRecording && recordingType === type ? (
+                  <StopCircle className="h-8 w-8 text-white" />
+                ) : (
+                  <Mic className="h-8 w-8 text-white" />
+                )}
+              </Button>
+            ))}
           </div>
           <DialogFooter>
             <Button onClick={() => setIsDictateDialogOpen(false)}>Close</Button>
@@ -1185,6 +1196,76 @@ const Index = () => {
       </Dialog>
     </div>
   );
+};
+
+const startRecording = async (type) => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorderRef.current = new MediaRecorder(stream);
+    const chunks = [];
+
+    mediaRecorderRef.current.ondataavailable = (e) => chunks.push(e.data);
+    mediaRecorderRef.current.onstop = () => {
+      const blob = new Blob(chunks, { type: 'audio/webm' });
+      setAudioBlob(blob);
+      sendAudioToWebhook(blob, type);
+    };
+
+    mediaRecorderRef.current.start();
+    setIsRecording(true);
+    setRecordingType(type);
+
+    // Add click event listener to stop recording
+    document.addEventListener('click', stopRecording);
+  } catch (err) {
+    console.error('Error starting recording:', err);
+    toast.error('Failed to start recording. Please check your microphone permissions.');
+  }
+};
+
+const stopRecording = useCallback(() => {
+  if (mediaRecorderRef.current && isRecording) {
+    mediaRecorderRef.current.stop();
+    setIsRecording(false);
+    setRecordingType(null);
+    setIsDictateDialogOpen(false);
+
+    // Remove click event listener
+    document.removeEventListener('click', stopRecording);
+  }
+}, [isRecording]);
+
+useEffect(() => {
+  return () => {
+    document.removeEventListener('click', stopRecording);
+  };
+}, [stopRecording]);
+
+const sendAudioToWebhook = async (blob, type) => {
+  const formData = new FormData();
+  formData.append('audio', blob, 'recording.webm');
+  formData.append('type', type);
+
+  try {
+    setIsLoading(true);
+    const response = await axios.post('https://hook.eu1.make.com/7hok9kqjre31fea5p7yi9ialusmbvlkc', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
+    if (response.data && response.data.result_text) {
+      setDraft(response.data.result_text);
+      toast.success('Audio transcribed and processed successfully!');
+    } else {
+      throw new Error('Unexpected response from server');
+    }
+  } catch (error) {
+    console.error('Error sending audio to webhook:', error);
+    toast.error('Failed to process audio. Please try again.');
+  } finally {
+    setIsLoading(false);
+  }
 };
 
 export default Index;

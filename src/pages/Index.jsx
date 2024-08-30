@@ -60,21 +60,6 @@ const Index = () => {
   const [calendarResponse, setCalendarResponse] = useState(null);
   const [showStickyLog, setShowStickyLog] = useState(false);
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
-  const [isDictateDialogOpen, setIsDictateDialogOpen] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingType, setRecordingType] = useState(null);
-
-  const handleRecordingStart = (type) => {
-    setRecordingType(type);
-    setIsRecording(true);
-    // TODO: Implement actual recording logic
-  };
-
-  const handleRecordingStop = () => {
-    setIsRecording(false);
-    setIsDictateDialogOpen(false);
-    // TODO: Implement logic to send recording to webhook
-  };
   const [isReGenerateDialogOpen, setIsReGenerateDialogOpen] = useState(false);
   const [reGenerateOptions, setReGenerateOptions] = useState({
     model: 'OpenAI',
@@ -1038,15 +1023,6 @@ const Index = () => {
               onChange={handleImageUpload}
               className="hidden"
             />
-            <div className="w-full sm:w-auto">
-              <Button
-                onClick={() => setIsDictateDialogOpen(true)}
-                className="w-full sm:w-auto text-sm sm:text-base py-1 sm:py-2 px-2 sm:px-4"
-              >
-                <Mic className="mr-2 h-4 w-4" />
-                Dictate
-              </Button>
-            </div>
             <div className="w-full sm:w-auto flex">
               <Button 
                 onClick={() => handleSubmit('post_linkedin')}
@@ -1108,47 +1084,6 @@ const Index = () => {
           </div>
         </div>
       )}
-
-      <Dialog open={isDictateDialogOpen} onOpenChange={setIsDictateDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Dictate Content</DialogTitle>
-            <DialogDescription>
-              Choose a category to start recording your content.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-center space-x-4 py-4">
-            {['personal', 'project', 'provoking'].map((type) => (
-              <Button
-                key={type}
-                onClick={() => handleRecordingStart(type)}
-                className={`rounded-full w-24 h-24 flex flex-col items-center justify-center ${
-                  isRecording && recordingType === type
-                    ? 'bg-red-500 animate-pulse'
-                    : 'bg-blue-500'
-                } text-white`}
-              >
-                {isRecording && recordingType === type ? (
-                  <Square className="h-8 w-8 mb-1" />
-                ) : (
-                  <Mic className="h-8 w-8 mb-1" />
-                )}
-                {type.charAt(0).toUpperCase() + type.slice(1)}
-              </Button>
-            ))}
-          </div>
-          {isRecording && (
-            <div className="flex justify-center mt-4">
-              <Button onClick={handleRecordingStop} variant="destructive">
-                Stop Recording
-              </Button>
-            </div>
-          )}
-          <DialogFooter>
-            <Button onClick={() => setIsDictateDialogOpen(false)}>Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={isReGenerateDialogOpen} onOpenChange={setIsReGenerateDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">

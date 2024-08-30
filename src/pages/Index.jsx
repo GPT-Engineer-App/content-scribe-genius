@@ -1262,6 +1262,10 @@ const Index = () => {
 
       if (response.data && response.data.result_text) {
         setDraft(response.data.result_text);
+        if (response.data.result_image) {
+          setImage(response.data.result_image);
+        }
+        setData(response.data);
         toast.success('Audio transcribed and processed successfully!');
       } else {
         throw new Error('Unexpected response from server');

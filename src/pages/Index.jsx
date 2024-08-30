@@ -1,4 +1,25 @@
-const DictateDialog = () => {
+import React, { useState, useRef } from 'react';
+import axios from 'axios';
+import { toast } from 'sonner';
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Mic, StopCircle } from 'lucide-react';
+
+const Index = () => {
+  const [isDictateDialogOpen, setIsDictateDialogOpen] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingType, setRecordingType] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    personal: '',
+    projects: '',
+    controversial: '',
+  });
+
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+
+  const DictateDialog = () => {
     const startRecording = async (type) => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -93,3 +114,19 @@ const DictateDialog = () => {
       </Dialog>
     );
   };
+
+  return (
+    <div className="container mx-auto p-4 pb-40 min-h-screen overflow-y-auto">
+      <DictateDialog />
+      <Button
+        onClick={() => setIsDictateDialogOpen(true)}
+        className="bg-gradient-to-r from-green-400 to-lime-500 hover:from-green-500 hover:to-lime-600 text-white font-bold py-2 px-4 rounded inline-flex items-center"
+      >
+        Dictate <Mic className="ml-2 h-4 w-4" />
+      </Button>
+      {/* Rest of your existing JSX */}
+    </div>
+  );
+};
+
+export default Index;

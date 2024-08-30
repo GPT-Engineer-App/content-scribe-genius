@@ -1,23 +1,4 @@
-import React, { useState, useRef } from 'react';
-import axios from 'axios';
-import { toast } from 'sonner';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Mic, StopCircle } from "lucide-react";
-
-const Index = () => {
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingType, setRecordingType] = useState(null);
-  const [isDictateDialogOpen, setIsDictateDialogOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    personal: '',
-    project: '',
-    controversial: ''
-  });
-  const mediaRecorderRef = useRef(null);
-
-  const startRecording = async (type) => {
+const startRecording = async (type) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaRecorderRef.current = new MediaRecorder(stream);
@@ -26,6 +7,7 @@ const Index = () => {
       mediaRecorderRef.current.ondataavailable = (e) => chunks.push(e.data);
       mediaRecorderRef.current.onstop = () => {
         const blob = new Blob(chunks, { type: 'audio/webm' });
+        setAudioBlob(blob);
         handleAudioUpload(blob, type);
       };
 
@@ -116,19 +98,11 @@ const Index = () => {
     </Dialog>
   );
 
+  // Add this line near the end of the component, before the closing return statement
   return (
     <div className="container mx-auto p-4 pb-40 min-h-screen overflow-y-auto">
-      {/* Existing content */}
-      <Button
-        onClick={() => setIsDictateDialogOpen(true)}
-        className="bg-gradient-to-r from-green-400 to-lime-500 hover:from-green-500 hover:to-lime-600 text-white font-bold py-2 px-4 rounded inline-flex items-center ml-2"
-      >
-        <Mic className="mr-2" /> Dictate
-      </Button>
+      {/* ... existing code ... */}
       <DictateDialog />
-      {/* Rest of the existing content */}
+      {/* ... rest of the existing code ... */}
     </div>
   );
-};
-
-export default Index;

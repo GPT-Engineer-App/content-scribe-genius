@@ -67,6 +67,12 @@ const Index = () => {
     style: 'default'
   });
   const [isDictateDialogOpen, setIsDictateDialogOpen] = useState(false);
+  const [recordingType, setRecordingType] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioBlob, setAudioBlob] = useState(null);
+
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
 
   const stickyLogRef = useRef(null);
 
@@ -1163,20 +1169,28 @@ const Index = () => {
           <DialogHeader>
             <DialogTitle>Dictate Content</DialogTitle>
             <DialogDescription>
-              Click the button below to start dictating your content.
+              Choose a recording type and click to start recording.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex justify-center py-4">
-            <Button
-              onClick={() => {
-                // TODO: Implement voice recording logic
-                toast.info("Voice recording feature coming soon!");
-              }}
-              className="bg-gradient-to-r from-green-400 to-lime-500 hover:from-green-500 hover:to-lime-600"
-            >
-              <Mic className="mr-2 h-4 w-4" />
-              Start Recording
-            </Button>
+          <div className="flex justify-center space-x-4 py-4">
+            {['personal', 'project', 'provoking'].map((type) => (
+              <Button
+                key={type}
+                onClick={() => handleRecordingStart(type)}
+                className={`rounded-full w-24 h-24 flex flex-col items-center justify-center ${
+                  isRecording && recordingType === type
+                    ? 'bg-red-500 animate-pulse'
+                    : 'bg-blue-500'
+                }`}
+              >
+                {isRecording && recordingType === type ? (
+                  <X className="h-8 w-8 text-white" />
+                ) : (
+                  <Mic className="h-8 w-8 text-white" />
+                )}
+                <span className="mt-2 text-white capitalize">{type}</span>
+              </Button>
+            ))}
           </div>
           <DialogFooter>
             <Button onClick={() => setIsDictateDialogOpen(false)}>Close</Button>
@@ -1185,6 +1199,80 @@ const Index = () => {
       </Dialog>
     </div>
   );
+
+  function handleRecordingStart(type) {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording(type);
+    }
+  }
+
+  async function startRecording(type) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorderRef.current.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+        setAudioBlob(audioBlob);
+        sendAudioToWebhook(audioBlob, type);
+      };
+
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
+      setRecordingType(type);
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      toast.error('Failed to start recording. Please check your microphone permissions.');
+    }
+  }
+
+  function stopRecording() {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      setIsDictateDialogOpen(false);
+    }
+  }
+
+  async function sendAudioToWebhook(audioBlob, type) {
+    setIsLoading(true);
+    const formData = new FormData();
+    formData.append('audio', audioBlob, 'recording.wav');
+    formData.append('type', type);
+
+    try {
+      const response = await axios.post(
+        'https://hook.eu1.make.com/7hok9kqjre31fea5p7yi9ialusmbvlkc',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      if (response.data && response.data.result_text) {
+        setDraft(response.data.result_text);
+        toast.success('Audio transcribed and processed successfully!');
+      } else {
+        throw new Error('Unexpected response from server');
+      }
+    } catch (error) {
+      console.error('Error sending audio to webhook:', error);
+      toast.error('Failed to process audio. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  }
 };
 
 export default Index;

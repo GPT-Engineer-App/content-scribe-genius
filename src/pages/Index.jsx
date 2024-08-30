@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
-import { Loader2, Copy, RefreshCw, Send, Image, Upload, Repeat, Calendar, X, Sparkles } from "lucide-react"
+import { Loader2, Copy, RefreshCw, Send, Image, Upload, Repeat, Calendar, X, Sparkles, Mic } from "lucide-react"
 import JSON5 from 'json5';
 import {
   Dialog,
@@ -66,6 +66,7 @@ const Index = () => {
     length: 'same',
     style: 'default'
   });
+  const [isDictateDialogOpen, setIsDictateDialogOpen] = useState(false);
 
   const stickyLogRef = useRef(null);
 
@@ -737,6 +738,14 @@ const Index = () => {
                 )}
               </Button>
               <Button
+                onClick={() => setIsDictateDialogOpen(true)}
+                disabled={isLoading}
+                className="bg-gradient-to-r from-green-400 to-lime-500 hover:from-green-500 hover:to-lime-600 transition-all duration-300 shadow-md hover:shadow-lg text-white"
+              >
+                <Mic className="mr-2 h-4 w-4" />
+                Dictate
+              </Button>
+              <Button
                 onClick={handleReset}
                 disabled={isLoading}
                 variant="outline"
@@ -1145,6 +1154,32 @@ const Index = () => {
           </div>
           <DialogFooter>
             <Button onClick={handleReGenerate} className="bg-green-500 hover:bg-green-600">Re-generate</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isDictateDialogOpen} onOpenChange={setIsDictateDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Dictate Content</DialogTitle>
+            <DialogDescription>
+              Click the button below to start dictating your content.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center py-4">
+            <Button
+              onClick={() => {
+                // TODO: Implement voice recording logic
+                toast.info("Voice recording feature coming soon!");
+              }}
+              className="bg-gradient-to-r from-green-400 to-lime-500 hover:from-green-500 hover:to-lime-600"
+            >
+              <Mic className="mr-2 h-4 w-4" />
+              Start Recording
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setIsDictateDialogOpen(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

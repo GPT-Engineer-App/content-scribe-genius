@@ -752,6 +752,20 @@ const Index = () => {
                 Dictate
               </Button>
               <Button
+                onClick={() => handleSubmit('spotlight')}
+                disabled={isLoading}
+                className="bg-gradient-to-r from-green-400 to-teal-500 hover:from-green-500 hover:to-teal-600 transition-all duration-300 shadow-md hover:shadow-lg text-white"
+              >
+                {activeButton === 'spotlight' && isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Spotlight
+                  </>
+                )}
+              </Button>
+              <Button
                 onClick={handleReset}
                 disabled={isLoading}
                 variant="outline"

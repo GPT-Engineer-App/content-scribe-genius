@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
-import { Loader2, Copy, RefreshCw, Send, Image, Upload, Repeat, Calendar, X, Sparkles, Mic } from "lucide-react"
+import { Loader2, Copy, RefreshCw, Send, Image, Upload, Repeat, Calendar, X, Sparkles, Mic, Star } from "lucide-react"
 import JSON5 from 'json5';
 import {
   Dialog,
@@ -754,15 +754,12 @@ const Index = () => {
               <Button
                 onClick={() => handleSubmit('spotlight')}
                 disabled={isLoading}
-                className="bg-gradient-to-r from-green-400 to-teal-500 hover:from-green-500 hover:to-teal-600 transition-all duration-300 shadow-md hover:shadow-lg text-white"
+                className="bg-gradient-to-r from-teal-400 to-blue-500 hover:from-teal-500 hover:to-blue-600 transition-all duration-300 shadow-md hover:shadow-lg text-white w-10 h-10 p-0"
               >
                 {activeButton === 'spotlight' && isLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <>
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Spotlight
-                  </>
+                  <Star className="h-4 w-4" />
                 )}
               </Button>
               <Button

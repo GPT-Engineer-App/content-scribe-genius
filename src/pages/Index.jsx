@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Button, Textarea, Input, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { Trash2, Loader2, Copy, RefreshCw, Send, Image, Upload, Repeat, Calendar, X, Sparkles, Mic } from "lucide-react";
+import { Trash2, Loader2, Copy, RefreshCw, Send, Image, Upload, Repeat, Calendar, X, Sparkles, Mic, Spotlight } from "lucide-react";
 import axios from 'axios';
 import { useQuery } from "@tanstack/react-query";
 import ReactMarkdown from 'react-markdown';
@@ -15,10 +18,25 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import JSON5 from 'json5';
 import { toast } from "sonner";
 import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, parse, isValid, addDays } from "date-fns";
-import { Spotlight } from 'lucide-react';
 
 const Index = () => {
-  // ... (keep all existing state variables)
+  const [formData, setFormData] = useState({ news: '', personal: '', controversial: '', projects: '' });
+  const [draft, setDraft] = useState('');
+  const [image, setImage] = useState(null);
+  const [fileName, setFileName] = useState('');
+  const [imageUploaded, setImageUploaded] = useState(false);
+  const [data, setData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [activeButton, setActiveButton] = useState(null);
+  const [scheduledDate, setScheduledDate] = useState(null);
+  const [isScheduleConfirmOpen, setIsScheduleConfirmOpen] = useState(false);
+  const [isReGenerateDialogOpen, setIsReGenerateDialogOpen] = useState(false);
+  const [reGenerateOptions, setReGenerateOptions] = useState({});
+  const [isDictateDialogOpen, setIsDictateDialogOpen] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [activeTab, setActiveTab] = useState("generator");
+  const mediaRecorderRef = useRef(null);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -36,11 +54,19 @@ const Index = () => {
   };
 
   const handleImageUpload = async (e) => {
-    // ... (keep existing image upload logic)
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImage(reader.result);
+        setFileName(file.name);
+        setImageUploaded(true);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const makeWebhookCall = async (action = 'generate') => {
-    console.log(`Starting webhook call for action: ${action}`);
     setIsLoading(true);
     setError(null);
     try {
@@ -56,7 +82,6 @@ const Index = () => {
         payload.reGenerateOptions = reGenerateOptions;
       }
 
-      console.log('Payload prepared:', payload);
       setImageUploaded(false);
 
       const response = await axios.post('https://hook.eu1.make.com/7hok9kqjre31fea5p7yi9ialusmbvlkc', payload, {
@@ -70,36 +95,20 @@ const Index = () => {
         let parsedData = response.data;
         
         if (typeof response.data === 'string') {
-          try {
-            parsedData = JSON.parse(response.data);
-          } catch (parseError) {
-            console.error('Error parsing response:', parseError);
-            throw new Error('Failed to parse server response');
-          }
+          parsedData = JSON.parse(response.data);
         }
         
         if (Array.isArray(parsedData)) {
           parsedData = parsedData[0];
         }
         
-        console.log('Parsed response data:', parsedData);
-        
         const sanitizeText = (text) => {
           if (typeof text !== 'string') return text;
           return text.replace(/\\n/g, '\n').replace(/\\/g, '');
         };
         
-        let sanitizedText, is_news;
-        if (Array.isArray(parsedData) && parsedData.length > 0) {
-          const firstItem = parsedData[0];
-          sanitizedText = sanitizeText(firstItem.result_text);
-          is_news = firstItem.is_news;
-        } else if (typeof parsedData === 'object' && parsedData !== null) {
-          sanitizedText = sanitizeText(parsedData.result_text);
-          is_news = parsedData.is_news;
-        } else {
-          throw new Error('Unexpected response format from server');
-        }
+        let sanitizedText = sanitizeText(parsedData.result_text);
+        let is_news = parsedData.is_news;
         
         if (sanitizedText === undefined || is_news === undefined) {
           throw new Error('Missing required data in server response');
@@ -107,7 +116,6 @@ const Index = () => {
         
         const result_image = parsedData.result_image || '';
         setData({ result_text: sanitizedText, is_news, result_image });
-        console.log('Extracted data:', { result_text: sanitizedText, is_news, result_image });
         
         if (is_news) {
           setFormData(prevData => ({ ...prevData, news: sanitizedText }));
@@ -120,7 +128,6 @@ const Index = () => {
         }
 
         sessionStorage.setItem('generatedContent', JSON.stringify({ result_text: sanitizedText, is_news, result_image }));
-        console.log('Content stored in sessionStorage');
 
         if (action === 'post_linkedin') {
           toast.success("Post successfully sent to LinkedIn!");
@@ -138,7 +145,6 @@ const Index = () => {
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
-      console.log('Webhook call completed');
     }
   };
 
@@ -148,52 +154,20 @@ const Index = () => {
   };
 
   const copyToClipboard = () => {
-    // ... (keep existing copyToClipboard logic)
+    navigator.clipboard.writeText(draft || (data && data.result_text) || '')
+      .then(() => toast.success("Content copied to clipboard!"))
+      .catch(() => toast.error("Failed to copy content"));
+  };
+
+  const handleTabChange = (value) => {
+    setActiveTab(value);
+    if (value === "calendar") {
+      handleGetCalendar();
+    }
   };
 
   const handleGetCalendar = async () => {
-    // ... (keep existing handleGetCalendar logic)
-  };
-
-  const handleRemovePost = async (post) => {
-    // ... (keep existing handleRemovePost logic)
-  };
-
-  const handleReschedulePost = async (post) => {
-    setSelectedPost(post);
-    setDialogOpen(true);
-  };
-
-  const handleScheduleConfirm = async () => {
-    // ... (keep existing handleScheduleConfirm logic)
-  };
-
-  const handleRescheduleConfirm = async (newDate) => {
-    // ... (keep existing handleRescheduleConfirm logic)
-  };
-
-  const handleRecordingStart = (type) => {
-    if (isRecording) {
-      stopRecording();
-    } else {
-      startRecording(type);
-    }
-  };
-
-  const startRecording = async (type) => {
-    // ... (keep existing startRecording logic)
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      setIsDictateDialogOpen(false);
-    }
-  };
-
-  const sendAudioToWebhook = async (audioBlob, type) => {
-    // ... (keep existing sendAudioToWebhook logic)
+    // Implement calendar fetching logic here
   };
 
   const renderButtons = () => (
@@ -452,7 +426,6 @@ const Index = () => {
           {/* Calendar content */}
         </TabsContent>
       </Tabs>
-      {/* Dialogs and other components */}
       {((draft && draft.trim() !== '') || (data && data.result_text && data.result_text.trim() !== '')) && activeTab === "generator" && (
         <div className="fixed bottom-0 left-0 right-0 bg-white bg-opacity-60 backdrop-blur-sm p-4 shadow-md">
           {renderButtons()}
@@ -465,7 +438,13 @@ const Index = () => {
           </div>
         </div>
       )}
-      {/* Other dialogs */}
+      <input
+        type="file"
+        id="imageUpload"
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={handleImageUpload}
+      />
     </div>
   );
 };
